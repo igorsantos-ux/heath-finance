@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Transaction {
+  id            String   @id @default(uuid())
+  description   String
+  amount        Float
+  type          String   // "INCOME" or "EXPENSE"
+  category      String
+  procedureName String?  // Nome do procedimento (para análise)
+  cost          Float    @default(0) // Custo direto para cálculo de rentabilidade
+  date          DateTime @default(now())
+  doctorId      String?
+  doctor        Doctor?  @relation(fields: [doctorId], references: [id])
+  customerId    String?
+  customer      Customer? @relation(fields: [customerId], references: [id])
+}
+
+model Doctor {
+  id           String        @id @default(uuid())
+  name         String
+  specialty    String
+  commission   Float         // Percentual de comissão
+  transactions Transaction[]
+}
+
+model Customer {
+  id           String        @id @default(uuid())
+  name         String
+  email        String?
+  phone        String?
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+}
+
+model Lead {
+  id        String   @id @default(uuid())
+  name      String
+  source    String   // "Instagram", "Google", "Indicação"
+  status    String   // "Novo", "Contatado", "Convertido", "Perdido"
+  createdAt DateTime @default(now())
+}
+
+model StockItem {
+  id           String   @id @default(uuid())
+  name         String
+  category     String
+  quantity     Int
+  minQuantity  Int
+  price        Float
+  lastRestock  DateTime @default(now())
+}
+
+model FinancialGoal {
+  id        String   @id @default(uuid())
+  month     Int
+  year      Int
+  target    Float
+  achieved  Float    @default(0)
+  type      String   // "REVENUE", "PROFIT", etc.
+}

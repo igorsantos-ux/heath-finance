@@ -1,0 +1,31 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+import financialRoutes from './routes/financialRoutes.js';
+import coreRoutes from './routes/coreRoutes.js';
+import reportingRoutes from './routes/reportingRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
+import historyRoutes from './routes/historyRoutes.js';
+
+dotenv.config();
+
+const app = express();
+const port = process.env.PORT || 3001;
+
+app.use(cors());
+app.use(express.json());
+
+app.use('/api/financial', financialRoutes);
+app.use('/api/core', coreRoutes);
+app.use('/api/reporting', reportingRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/history', historyRoutes);
+
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', message: 'Heath Finance API is running' });
+});
+
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});

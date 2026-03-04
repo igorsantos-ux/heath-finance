@@ -1,0 +1,53 @@
+# ATUE COMO:
+Você é um Arquiteto de Software Sênior e Especialista em Integração de Agentes AI.
+Vamos construir o "ClinicaFin SaaS" usando o workflow "Stitch + Antigravity".
+
+# 🎯 OBJETIVO
+Criar um SaaS de Gestão Financeira para Clínicas Médicas (React/Node/Postgres) com interface de nível "World Class Design".
+Usaremos o **Google Stitch** para gerar o Frontend (UI/UX) e você (Antigravity) para gerar o Backend, Lógica e Infraestrutura (Docker).
+
+# 🛠️ SETUP DE FERRAMENTAS (Execute agora)
+Antes de começar o código, configure o ambiente:
+1.  **Instale as Skills do Stitch:** Execute o comando para baixar as skills oficiais:
+    `npx add-skill google-labs-code/stitch-skills`
+2.  **Configure o MCP:** Verifique se o servidor MCP do Stitch está ativo para que possamos gerar telas via prompt.
+
+# 🏗️ ARQUITETURA DO PROJETO
+- **Pasta `/frontend`:** Código gerado majoritariamente pelo Stitch (React + Tailwind + Shadcn/UI).
+- **Pasta `/backend`:** Código gerado por você (Node.js + Express + Prisma).
+- **Pasta `/infra`:** Dockerfile e docker-compose.yml.
+
+# 🎨 DESIGN SYSTEM (Instruções para o Stitch)
+Quando você solicitar as telas ao Stitch, use estas diretrizes baseadas nas imagens anexadas, mas com upgrade visual:
+- **Estilo:** "Medical SaaS Dashboard 2026", limpo, muito espaço em branco (whitespace).
+- **Cores:** Deep Blue (#0f172a) para menus, Emerald Green (#10b981) para indicadores positivos, Slate (#64748b) para textos.
+- **Componentes:** Cards com `backdrop-blur` sutil, bordas arredondadas `rounded-xl`, sombras `shadow-sm`.
+
+# 📋 ROTEIRO DE EXECUÇÃO (Passo a Passo)
+
+### FASE 1: FRONTEND VISUAL (Via Stitch)
+Use a Skill do Stitch para gerar as 5 telas principais baseadas nas imagens de referência:
+1.  **Dashboard Geral:** KPIs (Faturamento, Despesas) e Gráfico de Área.
+2.  **Produtividade Médica:** Tabela complexa (Data Grid) com colunas de cálculo.
+3.  **Estoque:** Tabela com status colorido e Gráfico de Curva ABC.
+4.  **Fluxo de Caixa:** Visualização de Entradas vs Saídas.
+5.  **Smart Meta (Novo):** Tela com "Velocímetro" de meta e input de valor alvo.
+
+*Comando para o Agente:* "Peça ao Stitch para gerar a [Tela X] usando React, Tailwind e Lucide Icons, baseada na [Imagem X]. Salve em `/frontend`."
+
+### FASE 2: BACKEND & LÓGICA (Sua Responsabilidade)
+Enquanto o Stitch cuida da beleza, você deve:
+1.  Criar o `schema.prisma` (PostgreSQL) para suportar os dados dessas 5 telas.
+2.  Criar uma API RESTful em Node.js.
+3.  **Mock Data:** Crie um script `seed.ts` que popula o banco com dados falsos mas realistas, para que o Dashboard não fique vazio.
+
+### FASE 3: INTEGRAÇÃO & INFRA
+1.  Conecte as telas do Stitch (agora estáticas) à sua API (usando `fetch` ou `axios` + `TanStack Query`).
+2.  **Ponto de Equilíbrio:** Implemente a lógica matemática no Backend:
+    `(Custos Fixos) / (1 - (Custos Variáveis / Vendas))` e exiba no Frontend.
+3.  **Docker:** Gere o `docker-compose.yml` final que sobe:
+    - Container 1: Postgres
+    - Container 2: Backend (Node)
+    - Container 3: Frontend (Vite Server)
+
+Comece instalando as Skills do Stitch e criando a estrutura de pastas.

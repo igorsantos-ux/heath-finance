@@ -1,0 +1,80 @@
+# CONTEXTO E PERSONA
+Você é um Arquiteto de Software Full Stack Sênior e Especialista em UI/UX para a área da saúde (HealthTech). Sua missão é analisar dashboards estáticos (imagens anexadas) e transformá-los em um SaaS Web completo, moderno, responsivo e funcional.
+
+# OBJETIVO DO PROJETO: "ClinicaFin SaaS"
+Desenvolver uma aplicação web para gestão financeira de clínicas médicas. O sistema deve sair da lógica de "apenas visualização" (Power BI) para um sistema de gestão ativo, onde o usuário insere metas, gerencia estoques e visualiza projeções.
+
+# 🧠 SKILLS E DIRETRIZES TÉCNICAS (Obrigatório seguir)
+Para este projeto, ative suas habilidades de:
+1.  **Clean Architecture:** Separação estrita de responsabilidades. O Backend é a única fonte da verdade. O Frontend apenas renderiza.
+2.  **Component-Driven Development (CDD):** Crie componentes pequenos, reutilizáveis e isolados no React.
+3.  **Docker-First:** O ambiente de desenvolvimento deve ser encapsulado em containers para garantir que funcione igual no Localhost e no Easypanel depois.
+4.  **Security by Design:** Validação de dados (Zod) no backend e frontend.
+
+# 🏗️ STACK TECNOLÓGICO
+- **Estrutura de Pastas:** Raiz do projeto contendo `/frontend` e `/backend` separadamente.
+- **Frontend:** React (Vite) + TypeScript + Tailwind CSS.
+- **UI Library:** Shadcn/UI (para componentes como tabelas, modais, inputs) + Lucide React (ícones).
+- **Gráficos:** Recharts (para reproduzir os visuais do Power BI com interatividade).
+- **Backend:** Node.js (Express) com TypeScript.
+- **Banco de Dados:** PostgreSQL (via Docker).
+- **ORM:** Prisma (para modelagem e migrações).
+- **Infra:** Docker Compose para orquestrar tudo no Localhost.
+
+# 🎨 UI/UX E DESIGN SYSTEM (Nova Identidade)
+**NÃO UTILIZE** a paleta bege/verde das imagens de referência. Queremos um visual "SaaS Moderno 2026".
+- **Tema:** Dark Mode / Light Mode toggle (Padrão: Light Mode Clean).
+- **Paleta de Cores:**
+    - Primária: Deep Royal Blue (`#0f172a` - confiança/médico).
+    - Secundária/Acentos: Vibrant Teal (`#14b8a6` - saúde/dinheiro).
+    - Fundo: Slate Gray muito suave (`#f8fafc`).
+    - Cards: Branco com sombras suaves (`shadow-sm`) e bordas arredondadas (`rounded-xl`).
+- **Layout:** Sidebar lateral de navegação moderna, fixa à esquerda.
+
+# 📊 ANÁLISE DOS MÓDULOS (Baseado nas Imagens Anexadas)
+Implemente a lógica de negócio para os seguintes módulos:
+
+1.  **Dashboard Gerencial (Visão Geral):**
+    - Cards de KPI: Faturamento, Despesas, Saldo Líquido.
+    - Gráfico Principal: Evolução Faturamento vs Despesas (Area Chart).
+    - Gráfico Secundário: Metas (Gauge Chart/Velocímetro).
+
+2.  **Módulo de Produtividade Médica (Complexo):**
+    - **Lógica:** Tabela detalhada que calcula o "Resultado Final Produtividade".
+    - **Fórmula:** Faturamento Bruto - (Impostos + Materiais + Taxas Cartão + Custo Operacional + Tecnologia).
+    - Deve haver um split (divisão) claro entre o que é "Parte do Médico" e "Parte da Clínica".
+
+3.  **Módulo de Faturamento e Fluxo de Caixa:**
+    - Detalhamento por "Procedimentos" e "Tecnologias".
+    - Visualização de Entradas vs Saídas mensais.
+    - Projeção futura baseada na média dos últimos 3 meses.
+
+4.  **Controle de Estoque (Sazonalidade e Curva ABC):**
+    - Tabela com colunas: Código, Produto, Categoria, Estoque Atual, Estoque Mínimo, Status.
+    - **Lógica de Alerta:** Se `Estoque Atual` < `Estoque Mínimo`, o status deve ficar vermelho ("Abaixo do Mínimo") e gerar um alerta na dashboard.
+    - Gráfico de Pareto (Curva ABC): Quais produtos representam 80% do valor em estoque.
+
+# ⭐ NOVAS FUNCIONALIDADES (Diferenciais)
+Estas funcionalidades não existem nas imagens, crie do zero:
+
+1.  **Ponto de Equilíbrio (Break-Even Analysis):**
+    - Crie uma rota/tela específica.
+    - O sistema deve calcular quanto a clínica precisa faturar para pagar os custos fixos.
+    - **Visual:** Uma barra de progresso onde 0% é o início do mês e 100% é o Ponto de Equilíbrio. Mostre "Faltam R$ X para começar a lucrar este mês".
+
+2.  **Calculadora de Metas (Smart Goal):**
+    - Input: O usuário define "Quero lucrar R$ 200.000,00 este mês".
+    - Output: O sistema analisa o Ticket Médio histórico e diz: "Para isso, você precisa realizar mais 45 consultas de Botox e 12 de Laser".
+
+# 📝 PASSO A PASSO DE EXECUÇÃO (Script para o Agente)
+Siga estritamente esta ordem para evitar erros:
+
+1.  **Setup Inicial:** Crie a estrutura de pastas `/frontend` e `/backend`. Crie o `docker-compose.yml` na raiz configurando o PostgreSQL e o Node.
+2.  **Backend (Database):** Crie o `schema.prisma` com as tabelas necessárias: `Transactions`, `Doctors`, `Products`, `Goals`.
+3.  **Backend (API):** Crie as rotas básicas (CRUD) para alimentar os gráficos. Use dados "mockados" (fictícios) no seed do banco para que eu possa ver o dashboard cheio de dados imediatamente.
+4.  **Frontend (Shell):** Instale React, Tailwind, Shadcn/UI. Configure o Layout Base (Sidebar + Header).
+5.  **Frontend (Components):** Desenvolva os Cards, Gráficos (Recharts) e Tabelas para cada módulo descrito acima.
+6.  **Integração:** Conecte o Frontend ao Backend via `fetch` ou `axios`.
+7.  **Finalização:** Instruções de como rodar o comando `docker-compose up` para ver tudo funcionando em `localhost:3000`.
+
+Comece agora. Analise as imagens para extrair os campos de dados necessários para o Banco de Dados e gere o código.
