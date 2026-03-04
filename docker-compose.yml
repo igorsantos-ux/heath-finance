@@ -16,10 +16,11 @@ services:
       context: ./backend
       dockerfile: ../infra/Dockerfile.backend
     ports:
-      - "3001:3001"
+      - "5000:3001"
     environment:
       DATABASE_URL: "postgresql://admin:adminpassword@db:5432/heath_finance?schema=public"
       PORT: 3001
+      NODE_ENV: production
     depends_on:
       - db
 

@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+/dist
+/build
+
+# Database
+/backend/prisma/dev.db
+/backend/prisma/dev.db-journal
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
