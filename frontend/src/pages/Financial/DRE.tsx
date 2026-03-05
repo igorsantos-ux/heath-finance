@@ -14,13 +14,38 @@ import {
 const DREPage = () => {
     const clinicId = "default-clinic-id";
 
-    const { data: dre, isLoading } = useQuery({
+    // Dados Fictícios para Visualização (DRE Mock)
+    const dre = {
+        revenue: 150000,
+        variableCosts: 45000,
+        contributionMargin: 105000,
+        fixedCosts: 35000,
+        netProfit: 70000,
+        netMargin: 46.6,
+        ebitda: 75000,
+        details: [
+            { category: 'Procedimentos Dentários', value: 90000, type: 'revenue' },
+            { category: 'Cirurgias Estéticas', value: 45000, type: 'revenue' },
+            { category: 'Venda de Produtos', value: 15000, type: 'revenue' },
+            { category: 'Materiais Cirúrgicos', value: 25000, type: 'variable' },
+            { category: 'Laboratório Protético', value: 15000, type: 'variable' },
+            { category: 'Taxas de Cartão', value: 5000, type: 'variable' },
+            { category: 'Aluguel & Condomínio', value: 12000, type: 'fixed' },
+            { category: 'Salários & Encargos', value: 18000, type: 'fixed' },
+            { category: 'Marketing Digital', value: 5000, type: 'fixed' }
+        ]
+    };
+
+    /*
+    const { data: realDre, isLoading } = useQuery({
         queryKey: ['dre', clinicId],
         queryFn: async () => {
             const response = await reportingApi.getDRE(clinicId);
             return response.data;
         }
     });
+    */
+    const isLoading = false;
 
     if (isLoading) return <div className="p-10 text-[#697D58] font-bold">Gerando relatório DRE...</div>;
 
@@ -123,15 +148,15 @@ const SummaryCard = ({ label, value, icon, color }: any) => (
 
 const DRERow = ({ label, value, isMain, isNegative, isSubtotal, isTotal }: any) => (
     <div className={`flex justify-between items-center py-4 px-6 rounded-2xl transition-all ${isTotal ? 'bg-[#697D58] text-white shadow-xl shadow-[#697D58]/20 mt-6' :
-            isSubtotal ? 'bg-[#8A9A5B]/5 text-[#697D58] font-black' :
-                'hover:bg-slate-50'
+        isSubtotal ? 'bg-[#8A9A5B]/5 text-[#697D58] font-black' :
+            'hover:bg-slate-50'
         }`}>
         <span className={`text-sm ${isMain || isTotal || isSubtotal ? 'font-black' : 'font-medium text-slate-600'}`}>
             {label}
         </span>
         <span className={`text-base font-black ${isTotal ? 'text-white' :
-                isNegative ? 'text-[#DEB587]' :
-                    'text-[#697D58]'
+            isNegative ? 'text-[#DEB587]' :
+                'text-[#697D58]'
             }`}>
             {isNegative && '- '} R$ {Math.abs(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
         </span>

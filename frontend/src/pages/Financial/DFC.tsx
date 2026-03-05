@@ -14,14 +14,44 @@ import {
 const DFCPage = () => {
     const clinicId = "default-clinic-id";
 
-    // Reutilizando lógica de reports para DFC
-    const { data: dre, isLoading } = useQuery({
-        queryKey: ['dre', clinicId],
-        queryFn: async () => {
-            const response = await reportingApi.getDRE(clinicId);
-            return response.data;
+    // Dados Fictícios para Visualização (DFC Mock)
+    const dfc = {
+        initialBalance: 45000,
+        finalBalance: 72000,
+        netChange: 27000,
+        operational: {
+            total: 35000,
+            inflow: 90000,
+            outflow: 55000,
+            details: [
+                { category: 'Recebimento de Clientes', value: 90000, type: 'inflow' },
+                { category: 'Pagamento de Fornecedores', value: 30000, type: 'outflow' },
+                { category: 'Folha de Pagamento', value: 25000, type: 'outflow' }
+            ]
+        },
+        investing: {
+            total: -8000,
+            inflow: 0,
+            outflow: 8000,
+            details: [
+                { category: 'Compra de Equipamento Laser', value: 8000, type: 'outflow' }
+            ]
         }
-    });
+    };
+
+    /*
+    const { data: realDfc, isLoading } = useQuery({ ... });
+    */
+    const isLoading = false;
+
+    // Reutilizando lógica de reports para DFC
+    // const { data: dre, isLoading } = useQuery({
+    //     queryKey: ['dre', clinicId],
+    //     queryFn: async () => {
+    //         const response = await reportingApi.getDRE(clinicId);
+    //         return response.data;
+    //     }
+    // });
 
     if (isLoading) return <div className="p-10 text-[#697D58] font-bold">Gerando relatório DFC...</div>;
 

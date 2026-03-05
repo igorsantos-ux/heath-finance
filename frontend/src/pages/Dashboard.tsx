@@ -22,21 +22,32 @@ const Dashboard = () => {
     // Mock Clinic ID para demonstração (em prod viria do contexto de auth)
     const clinicId = "default-clinic-id";
 
-    const { data: summary } = useQuery({
-        queryKey: ['dashboard-kpis', clinicId],
-        queryFn: async () => {
-            const response = await reportingApi.getDashboardKPIs(clinicId);
-            return response.data;
-        }
-    });
+    // Dados Fictícios para Visualização (Mock Data)
+    const summary = {
+        revenue: 125400,
+        balance: 98200,
+        pendingPayables: 15400,
+        pendingReceivables: 42300,
+        margin: 78.4,
+        projections: { estimatedBalance: 112000 },
+        expenses: 27200
+    };
 
-    const { data: evolution } = useQuery({
-        queryKey: ['financial-evolution', clinicId],
-        queryFn: async () => {
-            const response = await financialApi.getEvolution(clinicId);
-            return response.data;
-        }
-    });
+    const evolution = [
+        { month: 'Set', income: 85000, expenses: 45000 },
+        { month: 'Out', income: 92000, expenses: 42000 },
+        { month: 'Nov', income: 78000, expenses: 38000 },
+        { month: 'Dez', income: 110000, expenses: 55000 },
+        { month: 'Jan', income: 95000, expenses: 48000 },
+        { month: 'Fev', income: 105000, expenses: 42000 },
+        { month: 'Mar', income: 125400, expenses: 27200 }
+    ];
+
+    // Mantendo os hooks comentados para futura integração real
+    /*
+    const { data: realSummary } = useQuery({ ... });
+    const { data: realEvolution } = useQuery({ ... });
+    */
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
