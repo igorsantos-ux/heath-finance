@@ -22,6 +22,8 @@ export const coreApi = {
     getPatients: (clinicId?: string) => api.get(withClinic('/core/patients', clinicId)),
     getDoctors: (clinicId?: string) => api.get(withClinic('/core/doctors', clinicId)),
     getStock: (clinicId?: string) => api.get(withClinic('/core/stock', clinicId)),
+    getProductivity: (clinicId?: string) => api.get(withClinic('/core/productivity', clinicId)), // Added to fix build
+    createDoctor: (data: any) => api.post('/core/doctors', data), // Added to fix build
 };
 
 export const reportingApi = {
@@ -31,6 +33,12 @@ export const reportingApi = {
     getBillingAnalytics: (clinicId: string) => api.get(withClinic('/reporting/billing-analytics', clinicId)),
     getGoals: (clinicId: string) => api.get(withClinic('/reporting/goals', clinicId)),
     postSmartGoal: (clinicId: string, targetProfit: number) => api.post('/reporting/smart-goal', { clinicId, targetProfit }),
+};
+
+export const historyApi = {
+    getSummary: (clinicId?: string) => api.get(withClinic('/history/summary', clinicId)),
+    getWeekly: (month: number, clinicId?: string) => api.get(withClinic(`/history/weekly?month=${month}`, clinicId)),
+    getProcedures: (clinicId?: string) => api.get(withClinic('/history/procedures', clinicId)),
 };
 
 export const analyticsApi = {

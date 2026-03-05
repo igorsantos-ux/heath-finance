@@ -25,10 +25,11 @@ import { analyticsApi } from '../services/api';
 const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
 
 const Insights = () => {
+    const clinicId = "default-clinic-id";
     const { data: insights, isLoading } = useQuery({
-        queryKey: ['insights-data'],
+        queryKey: ['insights-data', clinicId],
         queryFn: async () => {
-            const response = await analyticsApi.getInsights();
+            const response = await analyticsApi.getInsights(clinicId);
             return response.data;
         }
     });
