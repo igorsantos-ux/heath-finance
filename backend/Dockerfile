@@ -1,6 +1,6 @@
 FROM node:18-slim
 
-# Instalar dependências necessárias para o Prisma no Linux
+# Instalar dependências necessárias
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 # Copia arquivos de dependência
 COPY package*.json ./
 
-# Instala todas as dependências (incluindo o Prisma CLI)
+# Instala todas as dependências
 RUN npm install
 
 # Copia apenas o schema do prisma primeiro para gerar o cliente
@@ -18,6 +18,10 @@ RUN npx prisma generate
 # Copia o restante do código
 COPY . .
 
+# Garante permissão de execução para binários locais do npm
+RUN chmod -R +x node_modules/.bin
+
 EXPOSE 3001
 
-CMD ["npm", "run", "dev"]
+# Usa npx para garantir que o binário local seja encontrado e executado corretamente
+CMD ["npx", "tsx", "src/server.ts"]
