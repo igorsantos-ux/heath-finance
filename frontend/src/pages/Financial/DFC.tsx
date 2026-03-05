@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { reportingApi } from '../../services/api';
+// import { useQuery } from '@tanstack/react-query';
+// import { reportingApi } from '../../services/api';
 import {
     Activity,
     TrendingUp,
@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 const DFCPage = () => {
-    const clinicId = "default-clinic-id";
+    // const clinicId = "default-clinic-id";
 
     // Dados Fictícios para Visualização (DFC Mock)
     const dfc = {

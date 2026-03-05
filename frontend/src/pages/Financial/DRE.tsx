@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { reportingApi } from '../../services/api';
+// import { useQuery } from '@tanstack/react-query';
+// import { reportingApi } from '../../services/api';
 import {
     FileText,
     TrendingUp,
@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 const DREPage = () => {
-    const clinicId = "default-clinic-id";
+    // const clinicId = "default-clinic-id";
 
     // Dados Fictícios para Visualização (DRE Mock)
     const dre = {

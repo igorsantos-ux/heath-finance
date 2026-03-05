@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
     Target,
     Plus,
@@ -13,14 +12,11 @@ import {
     PieChart,
     ArrowRight
 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { financialApi, reportingApi } from '../services/api';
+// import { useQuery } from '@tanstack/react-query';
+// import { financialApi, reportingApi } from '../services/api';
 
 const Dashboard = () => {
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
-
-    // Mock Clinic ID para demonstração (em prod viria do contexto de auth)
-    const clinicId = "default-clinic-id";
 
     // Dados Fictícios para Visualização (Mock Data)
     const summary = {
@@ -45,6 +41,7 @@ const Dashboard = () => {
 
     // Mantendo os hooks comentados para futura integração real
     /*
+    const clinicId = "default-clinic-id";
     const { data: realSummary } = useQuery({ ... });
     const { data: realEvolution } = useQuery({ ... });
     */
