@@ -152,16 +152,29 @@ const Dashboard = () => {
                             const expenseH = (item.expenses / maxVal) * 100;
 
                             return (
-                                <div key={i} className="flex-1 h-full flex flex-col items-center gap-4 group">
-                                    <div className="flex-1 w-full flex justify-center items-end gap-1.5">
-                                        <div
-                                            className="w-3 md:w-5 bg-[#8A9A5B] rounded-t-lg transition-all duration-500 group-hover:opacity-80"
-                                            style={{ height: `${incomeH}%` }}
-                                        ></div>
-                                        <div
-                                            className="w-3 md:w-5 bg-[#DEB587] rounded-t-lg transition-all duration-500 group-hover:opacity-80"
-                                            style={{ height: `${expenseH}%` }}
-                                        ></div>
+                                <div key={i} className="flex-1 h-full flex flex-col items-center gap-4 group relative">
+                                    <div className="flex-1 w-full flex justify-center items-end gap-1.5 relative">
+                                        {/* Revenue Bar */}
+                                        <div className="flex flex-col items-center gap-1 w-3 md:w-5 h-full justify-end group/income">
+                                            <span className="opacity-0 group-hover/income:opacity-100 transition-opacity absolute -top-6 text-[10px] font-black text-[#697D58] bg-white px-1.5 py-0.5 rounded shadow-sm border border-[#8A9A5B]/10 z-10">
+                                                {Math.round(item.income / 1000)}k
+                                            </span>
+                                            <div
+                                                className="w-full bg-[#8A9A5B] rounded-t-lg transition-all duration-500 hover:brightness-110 shadow-sm"
+                                                style={{ height: `${incomeH}%` }}
+                                            ></div>
+                                        </div>
+
+                                        {/* Expense Bar */}
+                                        <div className="flex flex-col items-center gap-1 w-3 md:w-5 h-full justify-end group/expense">
+                                            <span className="opacity-0 group-hover/expense:opacity-100 transition-opacity absolute -top-6 text-[10px] font-black text-[#DEB587] bg-white px-1.5 py-0.5 rounded shadow-sm border border-[#DEB587]/10 z-10">
+                                                {Math.round(item.expenses / 1000)}k
+                                            </span>
+                                            <div
+                                                className="w-full bg-[#DEB587] rounded-t-lg transition-all duration-500 hover:brightness-110 shadow-sm"
+                                                style={{ height: `${expenseH}%` }}
+                                            ></div>
+                                        </div>
                                     </div>
                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">{item.month}</span>
                                 </div>
