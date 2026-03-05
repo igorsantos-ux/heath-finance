@@ -1,235 +1,157 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
+    Package,
     Search,
     Plus,
     AlertTriangle,
-    Loader2,
-    X
+    TrendingDown,
+    Filter,
+    MoreVertical,
+    ChevronRight,
+    ArrowUpRight
 } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { coreApi } from '../services/api';
 
 const Inventory = () => {
-    const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [newItem, setNewItem] = useState({
-        name: '',
-        category: 'Injetáveis',
-        quantity: 0,
-        minQuantity: 5,
-        price: 0
-    });
 
-    const { data: items, isLoading } = useQuery({
-        queryKey: ['stock-items'],
-        queryFn: async () => {
-            const response = await coreApi.getStock();
-            return response.data;
-        }
-    });
-
-    const createMutation = useMutation({
-        mutationFn: (item: any) => coreApi.createStockItem(item),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['stock-items'] });
-            setIsAddModalOpen(false);
-            setNewItem({
-                name: '',
-                category: 'Injetáveis',
-                quantity: 0,
-                minQuantity: 5,
-                price: 0
-            });
-        }
-    });
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        createMutation.mutate(newItem);
-    };
-
-    const filteredItems = items?.filter((item: any) =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    if (isLoading) {
-        return (
-            <div className="flex-1 flex items-center justify-center bg-slate-50">
-                <Loader2 className="w-8 h-8 animate-spin text-slate-900" />
-            </div>
-        );
-    }
+    const displayItems = [
+        { id: '1', name: 'Luvas de Procedimento (Caixa)', category: 'Descartáveis', stock: 45, minStock: 20, unit: 'un', price: 65.00 },
+        { id: '2', name: 'Máscaras Cirúrgicas', category: 'Descartáveis', stock: 8, minStock: 25, unit: 'un', price: 42.50 },
+        { id: '3', name: 'Resina Composta A2', category: 'Materiais', stock: 12, minStock: 5, unit: 'tubo', price: 180.00 },
+        { id: '4', name: 'Anestésico 2%', category: 'Medicamentos', stock: 3, minStock: 10, unit: 'cx', price: 110.00 },
+    ].filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
-        <div className="flex-1 p-8 bg-slate-50 h-screen overflow-y-auto">
-            <header className="flex justify-between items-center mb-12">
+        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Estoque e Insumos</h2>
-                    <p className="text-slate-500 font-bold mt-1 uppercase tracking-widest text-xs">Gestão de Materiais & Curva ABC</p>
+                    <h2 className="text-4xl font-black tracking-tight text-[#697D58]">Controle de Estoque</h2>
+                    <p className="text-slate-500 font-medium mt-1">Gestão de insumos, materiais e medicamentos.</p>
                 </div>
+                <div className="flex items-center gap-3">
+                    <button className="flex items-center gap-2 px-6 py-3 bg-[#8A9A5B] text-white rounded-2xl font-bold text-sm shadow-xl shadow-[#8A9A5B]/20 hover:scale-[1.02] active:scale-95 transition-all">
+                        <Plus size={20} />
+                        Novo Item
+                    </button>
+                </div>
+            </div>
 
-                <div className="flex gap-4">
-                    <div className="relative group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-slate-900" size={18} />
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <InventoryStatCard
+                    title="Total em Itens"
+                    value="156"
+                    icon={<Package size={20} />}
+                />
+                <InventoryStatCard
+                    title="Itens em Alerta"
+                    value="12"
+                    icon={<AlertTriangle size={20} />}
+                    color="dun"
+                    alert
+                />
+                <InventoryStatCard
+                    title="Valor em Estoque"
+                    value="R$ 8.420,00"
+                    icon={<TrendingDown size={20} />}
+                />
+            </div>
+
+            {/* List Section */}
+            <div className="bg-white/70 backdrop-blur-md rounded-[2.5rem] border border-[#8A9A5B]/10 shadow-sm overflow-hidden">
+                <div className="p-8 border-b border-[#8A9A5B]/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Buscar insumo..."
-                            className="pl-12 pr-6 py-3 bg-white border border-slate-200 rounded-2xl w-80 text-sm font-bold focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 outline-none transition-all shadow-sm"
+                            placeholder="Buscar no almoxarifado..."
+                            className="w-full pl-12 pr-4 py-3 bg-white border border-[#8A9A5B]/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#8A9A5B]/20 transition-all font-medium text-sm"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <button
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-black text-sm flex items-center gap-3 hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 active:scale-95"
-                    >
-                        <Plus size={20} />
-                        ADICIONAR INSUMO
+                    <button className="flex items-center gap-2 px-5 py-3 bg-white border border-[#8A9A5B]/10 rounded-2xl font-bold text-xs text-slate-600 hover:bg-slate-50 transition-all">
+                        <Filter size={16} /> Tudo
                     </button>
                 </div>
-            </header>
 
-            {/* Insumos List */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-                <table className="w-full text-left">
-                    <thead>
-                        <tr className="border-b border-slate-100 bg-slate-50/50">
-                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Insumo</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Categoria</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Quantidade</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Preço Un.</th>
-                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Valor Total</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {filteredItems?.map((item: any) => (
-                            <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                                <td className="px-8 py-6">
-                                    <span className="font-black text-slate-900 text-sm block">{item.name}</span>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase mt-0.5 block">Cód: {item.id.slice(0, 8)}</span>
-                                </td>
-                                <td className="px-6 py-6">
-                                    <span className="px-4 py-1.5 bg-slate-100 rounded-full text-[10px] font-black text-slate-600 uppercase tracking-widest">
-                                        {item.category}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-6 font-bold text-slate-600">
-                                    {item.quantity} un
-                                </td>
-                                <td className="px-6 py-6 font-bold">
-                                    {item.quantity <= item.minQuantity ? (
-                                        <span className="flex items-center gap-1.5 text-red-500 text-xs font-black">
-                                            <AlertTriangle size={14} /> REPOSIÇÃO
-                                        </span>
-                                    ) : (
-                                        <span className="text-emerald-500 text-xs font-black">OK</span>
-                                    )}
-                                </td>
-                                <td className="px-6 py-6 font-bold text-slate-900">
-                                    R$ {item.price.toLocaleString()}
-                                </td>
-                                <td className="px-8 py-6 text-right font-black text-slate-900 text-lg">
-                                    R$ {(item.quantity * item.price).toLocaleString()}
-                                </td>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="bg-slate-50/50">
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Material</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoria</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estoque</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                                <th className="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Ações</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Add Modal */}
-            {isAddModalOpen && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-[3rem] w-full max-w-xl p-10 shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-center mb-8">
-                            <div>
-                                <h3 className="text-2xl font-black text-slate-900">Novo Insumo</h3>
-                                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Cadastro de material em estoque</p>
-                            </div>
-                            <button onClick={() => setIsAddModalOpen(false)} className="bg-slate-100 p-3 rounded-2xl hover:bg-slate-200 transition-colors">
-                                <X size={20} className="text-slate-500" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Nome do Item</label>
-                                <input
-                                    required
-                                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-900 focus:border-slate-900 outline-none transition-all"
-                                    placeholder="Ex: Ácido Hialurônico 1ml"
-                                    value={newItem.name}
-                                    onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Categoria</label>
-                                    <select
-                                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-900 outline-none focus:border-slate-900 transition-all"
-                                        value={newItem.category}
-                                        onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                                    >
-                                        <option>Injetáveis</option>
-                                        <option>Consumíveis</option>
-                                        <option>Equipamentos</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Preço Unitário</label>
-                                    <input
-                                        type="number"
-                                        required
-                                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-900 focus:border-slate-900 outline-none transition-all"
-                                        placeholder="0.00"
-                                        value={newItem.price}
-                                        onChange={(e) => setNewItem({ ...newItem, price: Number(e.target.value) })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Qtd Atual</label>
-                                    <input
-                                        type="number"
-                                        required
-                                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-900 focus:border-slate-900 outline-none transition-all"
-                                        placeholder="0"
-                                        value={newItem.quantity}
-                                        onChange={(e) => setNewItem({ ...newItem, quantity: Number(e.target.value) })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Estoque Mínimo</label>
-                                    <input
-                                        type="number"
-                                        required
-                                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-900 focus:border-slate-900 outline-none transition-all"
-                                        placeholder="5"
-                                        value={newItem.minQuantity}
-                                        onChange={(e) => setNewItem({ ...newItem, minQuantity: Number(e.target.value) })}
-                                    />
-                                </div>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={createMutation.isPending}
-                                className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-sm tracking-widest hover:bg-emerald-600 transition-all shadow-xl active:scale-95 disabled:opacity-50"
-                            >
-                                {createMutation.isPending ? 'CADASTRANDOR...' : 'SALVAR NO ESTOQUE'}
-                            </button>
-                        </form>
-                    </div>
+                        </thead>
+                        <tbody className="divide-y divide-[#8A9A5B]/5">
+                            {displayItems.map((item: any) => (
+                                <tr key={item.id} className="hover:bg-[#8A9A5B]/5 transition-colors group cursor-pointer">
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-[#8A9A5B] border border-[#8A9A5B]/10 shadow-sm">
+                                                <Package size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-slate-700 text-sm">{item.name}</p>
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Preço Un: R$ {item.price.toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                        {item.category}
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        <p className={`font-black text-sm ${item.stock < item.minStock ? 'text-[#DEB587]' : 'text-slate-700'}`}>
+                                            {item.stock} {item.unit}
+                                        </p>
+                                        <p className="text-[10px] text-slate-400 font-medium">Mín: {item.minStock}</p>
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        {item.stock < item.minStock ? (
+                                            <span className="flex items-center gap-1.5 px-3 py-1 bg-[#DEB587]/10 text-[#DEB587] rounded-full text-[10px] font-black uppercase tracking-widest w-fit">
+                                                <AlertTriangle size={12} /> Reposição
+                                            </span>
+                                        ) : (
+                                            <span className="flex items-center gap-1.5 px-3 py-1 bg-[#8A9A5B]/10 text-[#697D58] rounded-full text-[10px] font-black uppercase tracking-widest w-fit">
+                                                <ArrowUpRight size={12} /> Normal
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="px-8 py-6 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button className="p-2 hover:bg-white rounded-lg transition-all text-slate-400 hover:text-[#8A9A5B]">
+                                                <MoreVertical size={18} />
+                                            </button>
+                                            <button className="p-2 hover:bg-[#8A9A5B] rounded-lg transition-all text-slate-400 hover:text-white">
+                                                <ChevronRight size={18} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
-            )}
+            </div>
         </div>
     );
 };
+
+const InventoryStatCard = ({ title, value, icon, color, alert }: any) => (
+    <div className={`bg-white p-6 rounded-3xl border ${alert ? 'border-[#DEB587]/20 shadow-lg shadow-[#DEB587]/5' : 'border-[#8A9A5B]/10 shadow-sm'} flex items-center gap-5 transition-all group hover:scale-[1.02]`}>
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${color === 'dun' ? 'bg-[#DEB587]/10 text-[#DEB587]' : 'bg-[#8A9A5B]/10 text-[#8A9A5B]'
+            }`}>
+            {icon}
+        </div>
+        <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{title}</p>
+            <h5 className={`text-2xl font-black ${alert ? 'text-[#DEB587]' : 'text-slate-800'}`}>{value}</h5>
+        </div>
+    </div>
+);
 
 export default Inventory;

@@ -2,29 +2,42 @@ import { Transaction } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 
 export class FinancialService {
-    static async getSummary() {
-        const transactions: Transaction[] = await prisma.transaction.findMany();
+    static async getSummary(clinicId: string) {
+        const transactions: Transaction[] = await prisma.transaction.findMany({
+            where: { clinicId }
+        });
 
         const revenue = transactions
             .filter((t: Transaction) => t.type === 'INCOME')
             .reduce((acc: number, t: Transaction) => acc + t.amount, 0);
 
-        const expenses = transactions
+        const currentExpenses = transactions
             .filter((t: Transaction) => t.type === 'EXPENSE')
+            .reduce((acc: number, t: Transaction) => acc + t.amount, 0);
+
+        const pendingReceivables = transactions
+            .filter((t: Transaction) => t.type === 'INCOME' && t.status === 'PENDING')
+            .reduce((acc: number, t: Transaction) => acc + t.amount, 0);
+
+        const pendingPayables = transactions
+            .filter((t: Transaction) => t.type === 'EXPENSE' && t.status === 'PENDING')
             .reduce((acc: number, t: Transaction) => acc + t.amount, 0);
 
         return {
             revenue,
-            expenses,
-            netProfit: revenue - expenses,
-            margin: revenue > 0 ? ((revenue - expenses) / revenue) * 100 : 0
+            expenses: currentExpenses,
+            netProfit: revenue - currentExpenses,
+            pendingReceivables,
+            pendingPayables,
+            margin: revenue > 0 ? ((revenue - currentExpenses) / revenue) * 100 : 0
         };
     }
 
-    static async getBreakEven() {
-        const transactions: Transaction[] = await prisma.transaction.findMany();
+    static async getBreakEven(clinicId: string) {
+        const transactions: Transaction[] = await prisma.transaction.findMany({
+            where: { clinicId }
+        });
 
-        // Simplificado: Custos Fixos são os categorizados como 'Fixo'
         const fixedCosts = transactions
             .filter((t: Transaction) => t.type === 'EXPENSE' && t.category === 'Fixo')
             .reduce((acc: number, t: Transaction) => acc + t.amount, 0);
@@ -37,7 +50,6 @@ export class FinancialService {
             .filter((t: Transaction) => t.type === 'INCOME')
             .reduce((acc: number, t: Transaction) => acc + t.amount, 0);
 
-        // Fórmula: Ponto de Equilíbrio = Custos Fixos / (1 - (Custos Variáveis / Vendas))
         const contributionMarginRatio = totalSales > 0 ? 1 - (variableCosts / totalSales) : 0;
         const breakEvenPoint = contributionMarginRatio > 0 ? fixedCosts / contributionMarginRatio : 0;
 
@@ -51,8 +63,7 @@ export class FinancialService {
         };
     }
 
-    static async getEvolution() {
-        // Obter os últimos 6 meses
+    static async getEvolution(clinicId: string) {
         const evolution = [];
         const now = new Date();
 
@@ -62,6 +73,7 @@ export class FinancialService {
 
             const monthTransactions = await prisma.transaction.findMany({
                 where: {
+                    clinicId,
                     date: {
                         gte: date,
                         lt: nextDate
@@ -88,17 +100,34 @@ export class FinancialService {
         return evolution;
     }
 
-    static async createTransaction(data: { amount: number; type: 'INCOME' | 'EXPENSE'; category: string; description: string; doctorId?: string; procedureName?: string; cost?: number; customerId?: string }) {
+    static async createTransaction(data: {
+        amount: number;
+        type: 'INCOME' | 'EXPENSE';
+        category: string;
+        description: string;
+        clinicId: string;
+        doctorId?: string;
+        procedureName?: string;
+        cost?: number;
+        customerId?: string;
+        status?: string;
+        paymentMethod?: string;
+        netAmount?: number;
+    }) {
         return await prisma.transaction.create({
             data: {
                 amount: data.amount,
+                netAmount: data.netAmount || data.amount,
                 type: data.type,
+                status: data.status || 'PAID',
+                paymentMethod: data.paymentMethod || 'Outros',
                 category: data.category,
                 description: data.description,
                 doctorId: data.doctorId || null,
                 procedureName: data.procedureName || null,
                 cost: data.cost ?? 0,
                 customerId: data.customerId || null,
+                clinicId: data.clinicId,
                 date: new Date()
             }
         });

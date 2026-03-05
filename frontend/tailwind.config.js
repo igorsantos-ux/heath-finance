@@ -7,13 +7,17 @@ export default {
     theme: {
         extend: {
             colors: {
-                primary: "#0f172a",
-                accent: "#10b981",
+                primary: "#8A9A5B", // Moss Green
+                secondary: "#697D58", // Reseda Green
+                accent: "#DEB587", // Dun
+                background: "#F0EAD6", // Eggshell
+                surface: "#FFFFFF",
+                text: {
+                    primary: "#1A202C",
+                    secondary: "#4A5568",
+                    muted: "#718096"
+                }
             },
-            borderRadius: {
-                'xl': '1rem',
-                '2xl': '1.5rem',
-            }
         },
     },
     plugins: [],

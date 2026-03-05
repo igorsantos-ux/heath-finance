@@ -7,27 +7,64 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Clinic {
+  id            String          @id @default(uuid())
+  name          String
+  logo          String?
+  users         User[]
+  transactions  Transaction[]
+  doctors       Doctor[]
+  customers     Customer[]
+  stockItems    StockItem[]
+  goals         FinancialGoal[]
+  documents     Document[]
+  createdAt     DateTime        @default(now())
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   // "ADMIN_GLOBAL" or "CLINIC_ADMIN"
+  clinicId  String?
+  clinic    Clinic?  @relation(fields: [clinicId], references: [id])
+  createdAt DateTime @default(now())
+}
+
 model Transaction {
   id            String   @id @default(uuid())
   description   String
   amount        Float
+  netAmount     Float    @default(0) // Valor líquido (pós taxas)
   type          String   // "INCOME" or "EXPENSE"
-  category      String
-  procedureName String?  // Nome do procedimento (para análise)
-  cost          Float    @default(0) // Custo direto para cálculo de rentabilidade
+  status        String   @default("PAID") // "PAID", "PENDING", "OVERDUE"
+  paymentMethod String?  // "Cartão", "Pix", "Dinheiro", etc.
+  category      String   // "Tecnologias", "Procedimentos", "Produtos", "Fixo", "Variável"
+  centerOfCost  String   @default("Operacional")
+  procedureName String?
+  cost          Float    @default(0)
   date          DateTime @default(now())
+  
   doctorId      String?
   doctor        Doctor?  @relation(fields: [doctorId], references: [id])
+  
   customerId    String?
   customer      Customer? @relation(fields: [customerId], references: [id])
+  
+  clinicId      String
+  clinic        Clinic   @relation(fields: [clinicId], references: [id])
 }
 
 model Doctor {
   id           String        @id @default(uuid())
   name         String
   specialty    String
-  commission   Float         // Percentual de comissão
+  commission   Float
   transactions Transaction[]
+  
+  clinicId     String
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
 }
 
 model Customer {
@@ -35,15 +72,20 @@ model Customer {
   name         String
   email        String?
   phone        String?
+  birthDate    DateTime?
+  lastVisit    DateTime?
   transactions Transaction[]
   createdAt    DateTime      @default(now())
+  
+  clinicId     String
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
 }
 
 model Lead {
   id        String   @id @default(uuid())
   name      String
-  source    String   // "Instagram", "Google", "Indicação"
-  status    String   // "Novo", "Contatado", "Convertido", "Perdido"
+  source    String
+  status    String
   createdAt DateTime @default(now())
 }
 
@@ -55,6 +97,9 @@ model StockItem {
   minQuantity  Int
   price        Float
   lastRestock  DateTime @default(now())
+  
+  clinicId     String
+  clinic       Clinic   @relation(fields: [clinicId], references: [id])
 }
 
 model FinancialGoal {
@@ -63,5 +108,20 @@ model FinancialGoal {
   year      Int
   target    Float
   achieved  Float    @default(0)
-  type      String   // "REVENUE", "PROFIT", etc.
+  type      String
+  
+  clinicId  String
+  clinic    Clinic @relation(fields: [clinicId], references: [id])
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  name      String
+  url       String
+  type      String   // "Contract", "PatientDoc", "Admin"
+  category  String?
+  createdAt DateTime @default(now())
+  
+  clinicId  String
+  clinic    Clinic @relation(fields: [clinicId], references: [id])
 }
