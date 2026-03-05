@@ -1,5 +1,6 @@
 import Sidebar from './components/Sidebar';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import BillingPage from './pages/Billing';
 import PatientsPage from './pages/Patients';
@@ -15,13 +16,17 @@ import Goals from './pages/Goals';
 import DocumentsPage from './pages/Documents';
 
 function App() {
+  const location = useLocation();
+  const isLandingPage = location.pathname === '/';
+
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
-      <Sidebar />
-      <main className="flex-1 ml-72 p-8 lg:p-12 transition-all duration-300">
-        <div className="max-w-7xl mx-auto">
+    <div className={`flex min-h-screen ${isLandingPage ? 'bg-white' : 'bg-[#F8FAFC]'}`}>
+      {!isLandingPage && <Sidebar />}
+      <main className={`flex-1 transition-all duration-300 ${isLandingPage ? 'ml-0' : 'ml-72 p-8 lg:p-12'}`}>
+        <div className={isLandingPage ? '' : 'max-w-7xl mx-auto'}>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/patients" element={<PatientsPage />} />
             <Route path="/despesas-faturamento" element={<ExpensesBilling />} />
