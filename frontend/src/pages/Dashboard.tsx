@@ -152,8 +152,8 @@ const Dashboard = () => {
                             const expenseH = (item.expenses / maxVal) * 100;
 
                             return (
-                                <div key={i} className="flex-1 flex flex-col items-center gap-4 group">
-                                    <div className="w-full flex justify-center items-end gap-1.5 h-full">
+                                <div key={i} className="flex-1 h-full flex flex-col items-center gap-4 group">
+                                    <div className="flex-1 w-full flex justify-center items-end gap-1.5">
                                         <div
                                             className="w-3 md:w-5 bg-[#8A9A5B] rounded-t-lg transition-all duration-500 group-hover:opacity-80"
                                             style={{ height: `${incomeH}%` }}
@@ -163,7 +163,7 @@ const Dashboard = () => {
                                             style={{ height: `${expenseH}%` }}
                                         ></div>
                                     </div>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.month}</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">{item.month}</span>
                                 </div>
                             );
                         })}
