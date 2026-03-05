@@ -7,8 +7,12 @@ import coreRoutes from './routes/coreRoutes.js';
 import reportingRoutes from './routes/reportingRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import historyRoutes from './routes/historyRoutes.js';
+import { SeedService } from './services/SeedService.js';
 
 dotenv.config();
+
+// Auto-seed se o banco estiver vazio
+SeedService.autoSeedIfEmpty();
 
 const app = express();
 const port = process.env.PORT || 3001;
