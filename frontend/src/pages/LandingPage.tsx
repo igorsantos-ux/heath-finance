@@ -34,12 +34,15 @@ const LandingPage = () => {
                     </div>
                     <span className="text-xl font-black text-[#697D58] tracking-tight">Roberta Alamino</span>
                 </div>
-                <Link
-                    to="/dashboard"
-                    className="px-6 py-2.5 bg-[#697D58] text-white rounded-full font-bold text-sm shadow-xl shadow-[#697D58]/20 hover:scale-105 transition-all"
-                >
-                    Acessar Plataforma
-                </Link>
+                <div className="flex items-center gap-8">
+                    <Link to="/about" className="text-[#697D58] font-bold hover:opacity-70 transition-opacity">Quem Somos</Link>
+                    <Link
+                        to="/dashboard"
+                        className="px-6 py-2.5 bg-[#697D58] text-white rounded-full font-bold text-sm shadow-xl shadow-[#697D58]/20 hover:scale-105 transition-all"
+                    >
+                        Acessar Plataforma
+                    </Link>
+                </div>
             </nav>
 
             {/* Hero Section - Apple Style Scale Down */}
