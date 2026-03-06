@@ -37,7 +37,7 @@ const LandingPage = () => {
                 <div className="flex items-center gap-8">
                     <Link to="/about" className="text-[#697D58] font-bold hover:opacity-70 transition-opacity">Quem Somos</Link>
                     <Link
-                        to="/dashboard"
+                        to="/login"
                         className="px-6 py-2.5 bg-[#697D58] text-white rounded-full font-bold text-sm shadow-xl shadow-[#697D58]/20 hover:scale-105 transition-all"
                     >
                         Acessar Plataforma
@@ -183,7 +183,7 @@ const LandingPage = () => {
                         Assuma o controle.
                     </h4>
                     <Link
-                        to="/dashboard"
+                        to="/login"
                         className="inline-flex items-center gap-4 px-12 py-6 bg-[#697D58] text-white text-2xl font-black rounded-full shadow-2xl shadow-[#697D58]/30 hover:scale-105 active:scale-95 transition-all group"
                     >
                         Entrar na Plataforma <ArrowRight className="group-hover:translate-x-2 transition-transform" />

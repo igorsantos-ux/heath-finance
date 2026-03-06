@@ -136,7 +136,7 @@ const AboutPage = () => {
                     <div className="flex justify-center gap-10 text-xs font-black uppercase tracking-widest text-[#8A9A5B]">
                         <Link to="/" className="hover:text-[#697D58] transition-colors">Início</Link>
                         <Link to="/about" className="hover:text-[#697D58] transition-colors">Quem Somos</Link>
-                        <Link to="/dashboard" className="hover:text-[#697D58] transition-colors">Plataforma</Link>
+                        <Link to="/login" className="hover:text-[#697D58] transition-colors">Plataforma</Link>
                     </div>
                 </div>
             </footer>

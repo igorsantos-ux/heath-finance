@@ -2,6 +2,7 @@ import Sidebar from './components/Sidebar';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
+import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import BillingPage from './pages/Billing';
 import PatientsPage from './pages/Patients';
@@ -18,7 +19,7 @@ import DocumentsPage from './pages/Documents';
 
 function App() {
   const location = useLocation();
-  const isPublicPage = location.pathname === '/' || location.pathname === '/about';
+  const isPublicPage = ['/', '/about', '/login'].includes(location.pathname);
 
   return (
     <div className={`flex min-h-screen ${isPublicPage ? 'bg-white' : 'bg-[#F8FAFC]'}`}>
@@ -28,6 +29,7 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/patients" element={<PatientsPage />} />
