@@ -12,10 +12,16 @@ import {
     FolderOpen,
     LogOut
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const Sidebar = () => {
     const location = useLocation();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        // Aqui poderíamos limpar tokens de autenticação se existissem
+        navigate('/login');
+    };
 
     const menuItems = [
         { icon: <LayoutDashboard size={18} />, label: "Dashboard", path: "/dashboard" },
@@ -77,7 +83,10 @@ const Sidebar = () => {
                     <p className="text-[10px] font-bold text-[#8A9A5B] text-right">65% atingido</p>
                 </div>
 
-                <button className="flex items-center gap-3 w-full px-4 py-3 mt-4 text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-200">
+                <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 w-full px-4 py-3 mt-4 text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-200"
+                >
                     <LogOut size={18} />
                     <span className="font-bold text-sm">Sair</span>
                 </button>
