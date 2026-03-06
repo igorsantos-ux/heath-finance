@@ -18,7 +18,7 @@ const Sidebar = () => {
     const location = useLocation();
 
     const menuItems = [
-        { icon: <LayoutDashboard size={18} />, label: "Dashboard", path: "/" },
+        { icon: <LayoutDashboard size={18} />, label: "Dashboard", path: "/dashboard" },
         { icon: <BarChart3 size={18} />, label: "Faturamento", path: "/billing" },
         { icon: <Users size={18} />, label: "Pacientes", path: "/patients" },
         { icon: <TrendingUp size={18} />, label: "Fluxo de Caixa", path: "/cash-flow" },
