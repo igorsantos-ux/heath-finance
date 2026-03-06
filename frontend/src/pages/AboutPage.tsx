@@ -82,8 +82,8 @@ const AboutPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         <PillarCard
                             icon={<Award size={32} />}
-                            title="Formação"
-                            desc="Especialista em Gestão de Negócios e Controladoria, com foco em alta performance financeira."
+                            title="Experiência Profissional"
+                            desc="Mais de uma década de atuação direta na operação e gestão de clínicas médicas, desenvolvendo expertise em gestão financeira, organização administrativa e direcionamento estratégico de negócios."
                         />
                         <PillarCard
                             icon={<Target size={32} />}
