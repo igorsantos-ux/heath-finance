@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import {
     Mail,
     Lock,
-    TrendingUp,
     ArrowRight,
     Github,
     Chrome
@@ -41,13 +40,9 @@ const LoginPage = () => {
             >
                 {/* Logo Section */}
                 <div className="flex flex-col items-center mb-10">
-                    <Link to="/" className="flex items-center gap-3 mb-6 group transition-all">
-                        <div className="w-14 h-14 bg-[#697D58] rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-[#697D58]/40 group-hover:scale-110 transition-transform">
-                            <TrendingUp size={32} />
-                        </div>
+                    <Link to="/" className="flex items-center gap-3 mb-4 group transition-all">
+                        <img src="/logo-alamino.png" alt="Logo Roberta Alamino" className="w-56 h-auto object-contain group-hover:scale-105 transition-transform" />
                     </Link>
-                    <h1 className="text-3xl font-black text-[#697D58] tracking-tighter">Heath Finance</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Roberta Alamino Executive</p>
                 </div>
 
                 {/* Glassmorphism Card */}

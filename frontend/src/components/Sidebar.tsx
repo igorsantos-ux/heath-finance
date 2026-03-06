@@ -35,14 +35,8 @@ const Sidebar = () => {
     return (
         <aside className="w-72 bg-[#F0EAD6] text-slate-800 flex flex-col h-screen fixed left-0 top-0 z-20 border-r border-[#8A9A5B]/20">
             <div className="p-8">
-                <div className="flex items-center gap-3 mb-8">
-                    <div className="w-10 h-10 bg-[#8A9A5B] rounded-xl flex items-center justify-center text-white shadow-lg shadow-[#8A9A5B]/20">
-                        <TrendingUp size={24} />
-                    </div>
-                    <div>
-                        <h1 className="text-lg font-bold tracking-tight text-[#697D58]">Heath Finance</h1>
-                        <p className="text-[10px] text-[#8A9A5B] uppercase font-bold tracking-widest">Premium Care</p>
-                    </div>
+                <div className="flex flex-col items-center mb-8">
+                    <img src="/logo-alamino.png" alt="Logo Roberta Alamino" className="w-48 h-auto object-contain" />
                 </div>
             </div>
 

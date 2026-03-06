@@ -29,10 +29,7 @@ const LandingPage = () => {
             {/* Navbar */}
             <nav className="fixed top-0 w-full z-[100] px-8 py-6 flex justify-between items-center backdrop-blur-md bg-white/30 border-b border-[#8A9A5B]/10">
                 <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 bg-[#697D58] rounded-xl flex items-center justify-center text-white shadow-lg shadow-[#697D58]/20">
-                        <TrendingUp size={24} />
-                    </div>
-                    <span className="text-xl font-black text-[#697D58] tracking-tight">Roberta Alamino</span>
+                    <img src="/logo-alamino.png" alt="Logo Roberta Alamino" className="h-12 w-auto object-contain" />
                 </div>
                 <div className="flex items-center gap-8">
                     <Link to="/about" className="text-[#697D58] font-bold hover:opacity-70 transition-opacity">Quem Somos</Link>
