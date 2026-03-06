@@ -286,8 +286,34 @@ const Dashboard = () => {
                             ))}
                         </div>
 
+                        {selectedPeriod === 'Personalizado' && (
+                            <div className="mt-6 flex flex-col gap-4 animate-in slide-in-from-top-2 duration-300">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Data Início</label>
+                                    <input
+                                        type="date"
+                                        value={customStartDate}
+                                        onChange={(e) => setCustomStartDate(e.target.value)}
+                                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 font-bold outline-none focus:border-[#8A9A5B] transition-all"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Data Fim</label>
+                                    <input
+                                        type="date"
+                                        value={customEndDate}
+                                        onChange={(e) => setCustomEndDate(e.target.value)}
+                                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 font-bold outline-none focus:border-[#8A9A5B] transition-all"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
                         <button
-                            onClick={() => setIsFilterModalOpen(false)}
+                            onClick={() => {
+                                console.log('Applying filter for:', selectedPeriod, selectedPeriod === 'Personalizado' ? { customStartDate, customEndDate } : '');
+                                setIsFilterModalOpen(false);
+                            }}
                             className="w-full mt-8 py-4 bg-[#697D58] text-white rounded-2xl font-black shadow-xl hover:brightness-110 active:scale-95 transition-all"
                         >
                             Aplicar Filtro
