@@ -195,8 +195,8 @@ const Dashboard = () => {
                                     <div className="flex-1 w-full flex justify-center items-end gap-1.5 relative">
                                         {/* Revenue Bar */}
                                         <div className="flex flex-col items-center gap-1 w-3 md:w-5 h-full justify-end group/income">
-                                            <span className="opacity-0 group-hover/income:opacity-100 transition-opacity absolute -top-6 text-[10px] font-black text-[#697D58] bg-white px-1.5 py-0.5 rounded shadow-sm border border-[#8A9A5B]/10 z-10">
-                                                {Math.round(item.income / 1000)}k
+                                            <span className="opacity-0 group-hover/income:opacity-100 transition-all duration-300 absolute -top-10 text-[11px] font-black text-white bg-[#697D58] px-3 py-1.5 rounded-xl shadow-xl border border-[#8A9A5B]/20 z-10 whitespace-nowrap scale-90 group-hover/income:scale-100 origin-bottom">
+                                                R$ {item.income.toLocaleString('pt-BR')}
                                             </span>
                                             <div
                                                 className="w-full bg-[#8A9A5B] rounded-t-lg transition-all duration-500 hover:brightness-110 shadow-sm"
@@ -206,8 +206,8 @@ const Dashboard = () => {
 
                                         {/* Expense Bar */}
                                         <div className="flex flex-col items-center gap-1 w-3 md:w-5 h-full justify-end group/expense">
-                                            <span className="opacity-0 group-hover/expense:opacity-100 transition-opacity absolute -top-6 text-[10px] font-black text-[#DEB587] bg-white px-1.5 py-0.5 rounded shadow-sm border border-[#DEB587]/10 z-10">
-                                                {Math.round(item.expenses / 1000)}k
+                                            <span className="opacity-0 group-hover/expense:opacity-100 transition-all duration-300 absolute -top-10 text-[11px] font-black text-white bg-[#DEB587] px-3 py-1.5 rounded-xl shadow-xl border border-[#DEB587]/20 z-10 whitespace-nowrap scale-90 group-hover/expense:scale-100 origin-bottom">
+                                                R$ {item.expenses.toLocaleString('pt-BR')}
                                             </span>
                                             <div
                                                 className="w-full bg-[#DEB587] rounded-t-lg transition-all duration-500 hover:brightness-110 shadow-sm"
