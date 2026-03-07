@@ -613,21 +613,89 @@ const SaaSManagement = () => {
 
                             <div className="p-8 max-h-[60vh] overflow-y-auto">
                                 {managementTab === 'perfil' && (
-                                    <div className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <InputField label="Nome Fantasia" value={selectedClinic.name} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, name: v })} />
-                                            <InputField label="Razão Social" value={selectedClinic.razaoSocial} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, razaoSocial: v })} />
-                                            <InputField label="CNPJ" value={selectedClinic.cnpj} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, cnpj: v })} />
-                                            <InputField label="E-mail" value={selectedClinic.email} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, email: v })} />
-                                            <InputField label="Telefone" value={selectedClinic.telefone} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, telefone: v })} />
-                                            <InputField label="Site" value={selectedClinic.site} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, site: v })} />
+                                    <div className="space-y-8">
+                                        {/* Seção 1: Dados Cadastrais */}
+                                        <div className="space-y-4">
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A9A5B] border-b border-[#8A9A5B]/10 pb-2">Dados Cadastrais</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <InputField label="Nome Fantasia" value={selectedClinic.name} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, name: v })} />
+                                                <InputField label="Razão Social" value={selectedClinic.razaoSocial} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, razaoSocial: v })} />
+                                                <InputField label="CNPJ" value={selectedClinic.cnpj} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, cnpj: v })} />
+                                                <InputField label="Inscrição Estadual" value={selectedClinic.inscricaoEstadual} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, inscricaoEstadual: v })} />
+                                                <InputField label="Inscrição Municipal" value={selectedClinic.inscricaoMunicipal} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, inscricaoMunicipal: v })} />
+                                                <InputField label="CNAE" value={selectedClinic.cnae} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, cnae: v })} />
+                                                <SelectField
+                                                    label="Regime Tributário"
+                                                    value={selectedClinic.regimeTributario}
+                                                    onChange={(v: any) => setSelectedClinic({ ...selectedClinic, regimeTributario: v })}
+                                                    options={[
+                                                        { label: 'Simples Nacional', value: 'SIMPLES_NACIONAL' },
+                                                        { label: 'Lucro Presumido', value: 'LUCRO_PRESUMIDO' },
+                                                        { label: 'Lucro Real', value: 'LUCRO_REAL' }
+                                                    ]}
+                                                />
+                                                <InputField label="Data de Abertura" type="date" value={selectedClinic.dataAbertura ? new Date(selectedClinic.dataAbertura).toISOString().split('T')[0] : ''} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, dataAbertura: v })} />
+                                            </div>
                                         </div>
+
+                                        {/* Seção 2: Localização */}
+                                        <div className="space-y-4">
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A9A5B] border-b border-[#8A9A5B]/10 pb-2">Localização</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <InputField label="CEP" value={selectedClinic.cep} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, cep: v })} />
+                                                <div className="md:col-span-2">
+                                                    <InputField label="Logradouro" value={selectedClinic.logradouro} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, logradouro: v })} />
+                                                </div>
+                                                <InputField label="Número" value={selectedClinic.numero} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, numero: v })} />
+                                                <InputField label="Bairro" value={selectedClinic.bairro} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, bairro: v })} />
+                                                <InputField label="Cidade" value={selectedClinic.cidade} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, cidade: v })} />
+                                                <InputField label="Estado" value={selectedClinic.estado} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, estado: v })} />
+                                            </div>
+                                        </div>
+
+                                        {/* Seção 3: Contato */}
+                                        <div className="space-y-4">
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A9A5B] border-b border-[#8A9A5B]/10 pb-2">Contato e Digital</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <InputField label="E-mail" value={selectedClinic.email} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, email: v })} />
+                                                <InputField label="Telefone" value={selectedClinic.telefone} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, telefone: v })} />
+                                                <InputField label="WhatsApp" value={selectedClinic.whatsapp} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, whatsapp: v })} />
+                                                <InputField label="Site" value={selectedClinic.site} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, site: v })} />
+                                            </div>
+                                        </div>
+
+                                        {/* Seção 4: Fiscais e Bancários */}
+                                        <div className="space-y-4">
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A9A5B] border-b border-[#8A9A5B]/10 pb-2">Fiscal e Bancário</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <InputField label="Cód. Serviço" value={selectedClinic.codigoServico} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, codigoServico: v })} />
+                                                <InputField label="Alíquota ISS (%)" type="number" value={selectedClinic.aliquotaISS} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, aliquotaISS: v })} />
+                                                <InputField label="Banco" value={selectedClinic.banco} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, banco: v })} />
+                                                <InputField label="Agência" value={selectedClinic.agencia} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, agencia: v })} />
+                                                <InputField label="Conta" value={selectedClinic.conta} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, conta: v })} />
+                                                <InputField label="Chave PIX" value={selectedClinic.chavePix} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, chavePix: v })} />
+                                            </div>
+                                        </div>
+
+                                        {/* Seção 5: Responsáveis e Operação */}
+                                        <div className="space-y-4">
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A9A5B] border-b border-[#8A9A5B]/10 pb-2">Responsáveis e Operação</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <InputField label="Responsável Admin" value={selectedClinic.responsavelAdmin} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, responsavelAdmin: v })} />
+                                                <InputField label="Responsável Técnico" value={selectedClinic.responsavelTecnico} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, responsavelTecnico: v })} />
+                                                <InputField label="CRM Responsável" value={selectedClinic.crmResponsavel} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, crmResponsavel: v })} />
+                                                <InputField label="Reg. Vigilância" value={selectedClinic.registroVigilancia} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, registroVigilancia: v })} />
+                                                <InputField label="CNES" value={selectedClinic.cnes} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, cnes: v })} />
+                                                <InputField label="Preço por Usuário (R$)" type="number" value={selectedClinic.pricePerUser} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, pricePerUser: v })} />
+                                            </div>
+                                        </div>
+
                                         <button
                                             onClick={handleSaveClinicProfile}
                                             disabled={isSubmitting}
-                                            className="w-full py-4 bg-[#697D58] text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-[#697D58]/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                                            className="w-full py-5 bg-[#697D58] text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-[#697D58]/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 mt-4"
                                         >
-                                            {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
+                                            {isSubmitting ? 'Salvando...' : 'Salvar Todas as Alterações'}
                                         </button>
                                     </div>
                                 )}
