@@ -29,10 +29,10 @@ const LoginPage = () => {
 
             login(token, user);
 
-            if (user.role === 'ADMIN_GLOBAL') {
-                navigate('/saas-dashboard');
+            if (user.role?.toUpperCase() === 'ADMIN_GLOBAL') {
+                navigate('/saas-dashboard', { replace: true });
             } else {
-                navigate('/dashboard');
+                navigate('/dashboard', { replace: true });
             }
         } catch (err: any) {
             setError(err.response?.data?.error || 'Erro ao realizar login. Verifique suas credenciais.');

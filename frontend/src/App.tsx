@@ -27,7 +27,7 @@ function App() {
   const isPublicPage = ['/', '/about', '/login'].includes(location.pathname);
 
   // Só mostra Sidebar se for Staff/Admin de Clínica e o carregamento terminou
-  const showSidebar = !isPublicPage && !loading && user && user.role !== 'ADMIN_GLOBAL';
+  const showSidebar = !isPublicPage && !loading && user && user.role?.toUpperCase() !== 'ADMIN_GLOBAL';
 
   // Loading global para rotas privadas durante a recuperação da sessão
   if (loading && !isPublicPage) {
@@ -44,10 +44,14 @@ function App() {
       <main className={`flex-1 transition-all duration-300 ${isPublicPage ? 'ml-0' : (showSidebar ? 'ml-72 p-8 lg:p-12' : 'p-0')}`}>
         <div className={isPublicPage ? '' : (showSidebar ? 'max-w-7xl mx-auto' : '')}>
           <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<LandingPage />} />
+            {/* Public Routes - Auto-redirect if logged in */}
+            <Route path="/" element={
+              user ? <Navigate to={user.role?.toUpperCase() === 'ADMIN_GLOBAL' ? "/saas-dashboard" : "/dashboard"} replace /> : <LandingPage />
+            } />
             <Route path="/about" element={<AboutPage />} />
-            <Route path="/login" element={<LoginPage />} />
+            <Route path="/login" element={
+              user ? <Navigate to={user.role?.toUpperCase() === 'ADMIN_GLOBAL' ? "/saas-dashboard" : "/dashboard"} replace /> : <LoginPage />
+            } />
 
             {/* SaaS Admin Routes */}
             <Route element={<ProtectedRoute allowedRoles={['ADMIN_GLOBAL']} />}>
@@ -72,7 +76,7 @@ function App() {
             </Route>
 
             {/* Redirects */}
-            <Route path="*" element={<Navigate to={user?.role === 'ADMIN_GLOBAL' ? "/saas-dashboard" : "/dashboard"} replace />} />
+            <Route path="*" element={<Navigate to={user?.role?.toUpperCase() === 'ADMIN_GLOBAL' ? "/saas-dashboard" : "/dashboard"} replace />} />
           </Routes>
         </div>
       </main>

@@ -21,7 +21,7 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
     }
 
     if (allowedRoles && !allowedRoles.includes(user.role)) {
-        return <Navigate to={user.role === 'ADMIN_GLOBAL' ? "/saas-dashboard" : "/dashboard"} replace />;
+        return <Navigate to={user.role?.toUpperCase() === 'ADMIN_GLOBAL' ? "/saas-dashboard" : "/dashboard"} replace />;
     }
 
     return <Outlet />;
