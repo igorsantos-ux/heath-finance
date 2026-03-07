@@ -13,6 +13,17 @@ import { SeedService } from './services/SeedService.js';
 
 dotenv.config();
 
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+app.use('/api/saas', saasRoutes);
+app.use('/api/financial', financialRoutes);
+app.use('/api/core', coreRoutes);
+app.use('/api/reporting', reportingRoutes);
+app.use('/api/analytics', analyticsRoutes);
 app.use('/api/history', historyRoutes);
 
 process.on('SIGTERM', () => {
