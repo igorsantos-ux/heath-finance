@@ -1,7 +1,18 @@
 import axios from 'axios';
 
+const getBaseURL = () => {
+    let url = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    // Remove barras duplicadas no final
+    url = url.replace(/\/+$/, '');
+    // Garante que termine com /api
+    if (!url.endsWith('/api')) {
+        url = `${url}/api`;
+    }
+    return url;
+};
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+    baseURL: getBaseURL(),
 });
 
 // Interceptor para injetar o token JWT
@@ -10,7 +21,8 @@ api.interceptors.request.use((config) => {
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log(`🚀 Request: ${config.method?.toUpperCase()} ${api.defaults.baseURL}${config.url}`);
+    // Log para depuração (remover em produção se necessário)
+    console.log(`🚀 Request: ${config.method?.toUpperCase()} ${config.baseURL}/${config.url}`);
     return config;
 });
 
@@ -19,6 +31,7 @@ api.interceptors.response.use(
     (error) => {
         console.error('❌ API Error:', {
             url: error.config?.url,
+            baseURL: error.config?.baseURL,
             status: error.response?.status,
             message: error.message,
             data: error.response?.data
@@ -28,53 +41,53 @@ api.interceptors.response.use(
 );
 
 export const authApi = {
-    login: (data: any) => api.post('/auth/login', data),
-    me: () => api.get('/auth/me'),
+    login: (data: any) => api.post('auth/login', data),
+    me: () => api.get('auth/me'),
 };
 
 export const saasApi = {
-    getClinics: () => api.get('/saas/clinics'),
-    createClinic: (data: any) => api.post('/saas/clinics', data),
-    getUsers: () => api.get('/saas/users'),
-    createUser: (data: any) => api.post('/saas/users', data),
-    getBilling: () => api.get('/saas/billing'),
-    updateClinic: (id: string, data: any) => api.patch(`/saas/clinics/${id}`, data),
+    getClinics: () => api.get('saas/clinics'),
+    createClinic: (data: any) => api.post('saas/clinics', data),
+    getUsers: () => api.get('saas/users'),
+    createUser: (data: any) => api.post('saas/users', data),
+    getBilling: () => api.get('saas/billing'),
+    updateClinic: (id: string, data: any) => api.patch(`saas/clinics/${id}`, data),
     getInvoicePDFUrl: (clinicId: string) => `${api.defaults.baseURL}/saas/billing/${clinicId}/pdf`,
     getInvoiceXMLUrl: (clinicId: string) => `${api.defaults.baseURL}/saas/billing/${clinicId}/xml`,
 };
 
 export const financialApi = {
-    getSummary: () => api.get('/financial/summary'),
-    getBreakEven: () => api.get('/financial/break-even'),
-    getEvolution: () => api.get('/financial/evolution'),
-    createTransaction: (data: any) => api.post('/financial/transactions', data),
+    getSummary: () => api.get('financial/summary'),
+    getBreakEven: () => api.get('financial/break-even'),
+    getEvolution: () => api.get('financial/evolution'),
+    createTransaction: (data: any) => api.post('financial/transactions', data),
 };
 
 export const coreApi = {
-    getPatients: () => api.get('/core/patients'),
-    getDoctors: () => api.get('/core/doctors'),
-    getStock: () => api.get('/core/stock'),
-    getProductivity: () => api.get('/core/productivity'),
-    createDoctor: (data: any) => api.post('/core/doctors', data),
+    getPatients: () => api.get('core/patients'),
+    getDoctors: () => api.get('core/doctors'),
+    getStock: () => api.get('core/stock'),
+    getProductivity: () => api.get('core/productivity'),
+    createDoctor: (data: any) => api.post('core/doctors', data),
 };
 
 export const reportingApi = {
-    getDashboardKPIs: () => api.get('/reporting/dashboard-kpis'),
-    getCashFlow: () => api.get('/reporting/cash-flow'),
-    getDRE: () => api.get('/reporting/dre'),
-    getBillingAnalytics: () => api.get('/reporting/billing-analytics'),
-    getGoals: () => api.get('/reporting/goals'),
-    postSmartGoal: (targetProfit: number) => api.post('/reporting/smart-goal', { targetProfit }),
+    getDashboardKPIs: () => api.get('reporting/dashboard-kpis'),
+    getCashFlow: () => api.get('reporting/cash-flow'),
+    getDRE: () => api.get('reporting/dre'),
+    getBillingAnalytics: () => api.get('reporting/billing-analytics'),
+    getGoals: () => api.get('reporting/goals'),
+    postSmartGoal: (targetProfit: number) => api.post('reporting/smart-goal', { targetProfit }),
 };
 
 export const historyApi = {
-    getSummary: () => api.get('/history/summary'),
-    getWeekly: (month: number) => api.get(`/history/weekly?month=${month}`),
-    getProcedures: () => api.get('/history/procedures'),
+    getSummary: () => api.get('history/summary'),
+    getWeekly: (month: number) => api.get(`history/weekly?month=${month}`),
+    getProcedures: () => api.get('history/procedures'),
 };
 
 export const analyticsApi = {
-    getInsights: () => api.get('/analytics/insights'),
+    getInsights: () => api.get('analytics/insights'),
 };
 
 export default api;
