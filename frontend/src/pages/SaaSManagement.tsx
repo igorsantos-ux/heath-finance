@@ -13,6 +13,35 @@ import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileDown, CreditCard, Edit3, Check, X as XIcon } from 'lucide-react';
 
+const InputField = ({ label, value, onChange, placeholder = '', type = 'text', required = false }: any) => (
+    <div className="space-y-1.5">
+        <label className="text-[10px] font-black uppercase tracking-widest text-[#697D58] ml-2 block">{label}{required && '*'}</label>
+        <input
+            type={type}
+            required={required}
+            className="w-full bg-slate-50 border border-[#8A9A5B]/10 rounded-xl py-2.5 px-4 focus:ring-2 focus:ring-[#8A9A5B]/50 outline-none transition-all font-bold text-sm"
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder={placeholder}
+        />
+    </div>
+);
+
+const SelectField = ({ label, value, onChange, options, required = false }: any) => (
+    <div className="space-y-1.5">
+        <label className="text-[10px] font-black uppercase tracking-widest text-[#697D58] ml-2 block">{label}{required && '*'}</label>
+        <select
+            required={required}
+            className="w-full bg-slate-50 border border-[#8A9A5B]/10 rounded-xl py-2.5 px-4 focus:ring-2 focus:ring-[#8A9A5B]/50 outline-none transition-all font-bold text-sm appearance-none"
+            value={value}
+            onChange={e => onChange(e.target.value)}
+        >
+            <option value="">Selecione...</option>
+            {options.map((opt: any) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+        </select>
+    </div>
+);
+
 const SaaSManagement = () => {
     const { logout, user } = useAuth();
     const [clinics, setClinics] = useState<any[]>([]);
@@ -102,34 +131,6 @@ const SaaSManagement = () => {
         }
     };
 
-    const InputField = ({ label, value, onChange, placeholder = '', type = 'text', required = false }: any) => (
-        <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-[#697D58] ml-2 block">{label}{required && '*'}</label>
-            <input
-                type={type}
-                required={required}
-                className="w-full bg-slate-50 border border-[#8A9A5B]/10 rounded-xl py-2.5 px-4 focus:ring-2 focus:ring-[#8A9A5B]/50 outline-none transition-all font-bold text-sm"
-                value={value}
-                onChange={e => onChange(e.target.value)}
-                placeholder={placeholder}
-            />
-        </div>
-    );
-
-    const SelectField = ({ label, value, onChange, options, required = false }: any) => (
-        <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-[#697D58] ml-2 block">{label}{required && '*'}</label>
-            <select
-                required={required}
-                className="w-full bg-slate-50 border border-[#8A9A5B]/10 rounded-xl py-2.5 px-4 focus:ring-2 focus:ring-[#8A9A5B]/50 outline-none transition-all font-bold text-sm appearance-none"
-                value={value}
-                onChange={e => onChange(e.target.value)}
-            >
-                <option value="">Selecione...</option>
-                {options.map((opt: any) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-            </select>
-        </div>
-    );
 
     return (
         <div className="min-h-screen bg-[#F0EAD6] text-[#1A202C] p-6 md:p-10 animate-in fade-in duration-700">
