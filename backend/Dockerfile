@@ -23,5 +23,5 @@ RUN chmod -R +x node_modules/.bin
 
 EXPOSE 3001
 
-# Usa npx para garantir que o binário local seja encontrado e executado corretamente
-CMD ["npx", "tsx", "src/server.ts"]
+# Sincroniza o banco de dados e inicia o servidor
+CMD npx prisma generate && npx prisma db push --accept-data-loss && npx tsx src/server.ts
