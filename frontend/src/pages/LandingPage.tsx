@@ -1,14 +1,140 @@
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import React from 'react';
 import {
     ChevronDown,
     TrendingUp,
     ShieldCheck,
     BarChart3,
     ArrowRight,
-    MousePointer2
+    MousePointer2,
+    Layout,
+    Calendar,
+    PieChart,
+    Activity,
+    ChevronLeft,
+    ChevronRight,
+    Database,
+    Zap
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+const features = [
+    {
+        icon: <BarChart3 className="text-emerald-500" />,
+        title: "Dashboard de Performance",
+        desc: "Visualize lucros, despesas e lucratividade em tempo real com gráficos intuitivos.",
+        color: "bg-emerald-50"
+    },
+    {
+        icon: <Layout className="text-blue-500" />,
+        title: "Gestão Multi-Clínica",
+        desc: "Controle todas as suas unidades em uma única interface centralizada e segura.",
+        color: "bg-blue-50"
+    },
+    {
+        icon: <Zap className="text-amber-500" />,
+        title: "Faturamento Automatizado",
+        desc: "Geração de faturas SaaS, PDFs e XMLs de forma automática e sem erros.",
+        color: "bg-amber-50"
+    },
+    {
+        icon: <Database className="text-purple-500" />,
+        title: "Auditoria Completa",
+        desc: "Rastreabilidade total de cada centavo. Saiba exatamente de onde vem e para onde vai.",
+        color: "bg-purple-50"
+    },
+    {
+        icon: <Activity className="text-rose-500" />,
+        title: "Insights Estratégicos",
+        desc: "Relatórios avançados que ajudam na tomada de decisão baseada em dados reais.",
+        color: "bg-rose-50"
+    }
+];
+
+const FeatureCarousel = () => {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    const next = () => {
+        setCurrentIndex((prev) => (prev + 1) % features.length);
+    };
+
+    const prev = () => {
+        setCurrentIndex((prev) => (prev - 1 + features.length) % features.length);
+    };
+
+    return (
+        <div className="relative w-full max-w-7xl mx-auto px-4 py-24 overflow-hidden">
+            <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-16 gap-8">
+                <div>
+                    <motion.span
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        className="text-[10px] font-black uppercase tracking-[0.4em] text-[#8A9A5B] mb-4 block"
+                    >
+                        Ecossistema Completo
+                    </motion.span>
+                    <h2 className="text-5xl md:text-7xl font-black text-[#697D58] tracking-tighter leading-none">
+                        Ferramentas de <br />
+                        <span className="text-[#8A9A5B]">Elite</span>.
+                    </h2>
+                </div>
+                <div className="flex gap-4">
+                    <button
+                        onClick={prev}
+                        className="p-5 rounded-full bg-white border border-slate-100 text-[#697D58] shadow-xl hover:bg-[#697D58] hover:text-white transition-all group active:scale-90"
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
+                    <button
+                        onClick={next}
+                        className="p-5 rounded-full bg-white border border-slate-100 text-[#697D58] shadow-xl hover:bg-[#697D58] hover:text-white transition-all group active:scale-90"
+                    >
+                        <ChevronRight size={24} />
+                    </button>
+                </div>
+            </div>
+
+            <motion.div
+                className="flex gap-8 cursor-grab active:cursor-grabbing pb-12"
+                animate={{ x: isMobile ? `calc(-${currentIndex * 100}% - ${currentIndex * 32}px)` : `calc(-${currentIndex * 33.33}% - ${currentIndex * 26.6}px)` }}
+                transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                drag="x"
+                dragConstraints={{ left: -1000, right: 0 }}
+            >
+                {features.map((f, i) => (
+                    <motion.div
+                        key={i}
+                        className="min-w-[320px] md:min-w-[420px] bg-white rounded-[3rem] p-12 shadow-2xl shadow-slate-200/50 border border-slate-50 flex flex-col gap-8 group hover:border-[#8A9A5B]/30 transition-all relative overflow-hidden"
+                        whileHover={{ y: -12 }}
+                    >
+                        <div className={`w-20 h-20 ${f.color} rounded-3xl flex items-center justify-center relative z-10`}>
+                            {React.cloneElement(f.icon as React.ReactElement, { size: 40 })}
+                        </div>
+                        <div className="relative z-10">
+                            <h4 className="text-3xl font-black text-[#697D58] mb-4">{f.title}</h4>
+                            <p className="text-slate-500 font-medium leading-relaxed text-lg">{f.desc}</p>
+                        </div>
+                        <div className="mt-auto pt-6 flex items-center gap-2 text-[#8A9A5B] font-black uppercase text-xs tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0 relative z-10">
+                            Descobrir mais <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform" />
+                        </div>
+
+                        {/* Decorative Gradient */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-slate-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </motion.div>
+                ))}
+            </motion.div>
+        </div>
+    );
+};
 
 const LandingPage = () => {
     const targetRef = useRef(null);
@@ -127,6 +253,11 @@ const LandingPage = () => {
                         <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/20 rounded-full blur-[80px]"></div>
                     </motion.div>
                 </div>
+            </section>
+
+            {/* Feature Carousel Section */}
+            <section className="bg-white overflow-hidden">
+                <FeatureCarousel />
             </section>
 
             {/* Section 3 - The "Roberta Alamino" Way */}
