@@ -13,6 +13,7 @@ router.patch('/clinics/:id', SaaSController.updateClinic);
 
 router.get('/users', SaaSController.listUsers);
 router.post('/users', SaaSController.createUser);
+router.patch('/users/:id', SaaSController.updateUser);
 
 router.get('/billing', SaaSController.getBillingSummary);
 router.get('/billing/:clinicId/pdf', SaaSController.generateInvoicePDF);

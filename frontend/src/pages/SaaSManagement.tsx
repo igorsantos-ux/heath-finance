@@ -72,6 +72,11 @@ const SaaSManagement = () => {
     const [selectedClinic, setSelectedClinic] = useState<any>(null);
     const [managementTab, setManagementTab] = useState<'perfil' | 'acesso' | 'usuarios'>('perfil');
 
+    // User Management Modal States
+    const [isUserManagementModalOpen, setIsUserManagementModalOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<any>(null);
+    const [userManagementTab, setUserManagementTab] = useState<'perfil' | 'seguranca' | 'acesso'>('perfil');
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -178,6 +183,57 @@ const SaaSManagement = () => {
             setIsManagementModalOpen(false);
         } catch (error) {
             alert('Erro ao atualizar dados da clínica');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // User Management Functions
+    const handleOpenUserManagement = (user: any) => {
+        setSelectedUser({ ...user });
+        setUserManagementTab('perfil');
+        setIsUserManagementModalOpen(true);
+    };
+
+    const handleUpdateUser = async () => {
+        if (!selectedUser) return;
+        setIsSubmitting(true);
+        try {
+            await saasApi.updateUser(selectedUser.id, selectedUser);
+            fetchData();
+            setIsUserManagementModalOpen(false);
+        } catch (error: any) {
+            alert(error.response?.data?.error || 'Erro ao atualizar usuário');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleResetUserPassword = async () => {
+        if (!selectedUser) return;
+        if (!confirm('Deseja resetar a senha deste usuário para "admin123" (provisório)?')) return;
+
+        setIsSubmitting(true);
+        try {
+            await saasApi.updateUser(selectedUser.id, { password: 'admin123' });
+            alert('Senha resetada com sucesso para: admin123');
+            setIsUserManagementModalOpen(false);
+        } catch (error: any) {
+            alert('Erro ao resetar senha');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleUpdateUserStatus = async (status: boolean) => {
+        if (!selectedUser) return;
+        setIsSubmitting(true);
+        try {
+            await saasApi.updateUser(selectedUser.id, { isActive: status });
+            setSelectedUser({ ...selectedUser, isActive: status });
+            fetchData();
+        } catch (error) {
+            alert('Erro ao atualizar status do usuário');
         } finally {
             setIsSubmitting(false);
         }
@@ -360,7 +416,11 @@ const SaaSManagement = () => {
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                handleOpenManagement(item);
+                                                                if (activeTab === 'clinics') {
+                                                                    handleOpenManagement(item);
+                                                                } else if (activeTab === 'users') {
+                                                                    handleOpenUserManagement(item);
+                                                                }
                                                             }}
                                                             className="p-2 hover:bg-[#8A9A5B]/10 rounded-lg text-slate-400 hover:text-[#697D58] transition-all"
                                                         >
@@ -689,14 +749,6 @@ const SaaSManagement = () => {
                                                 <InputField label="Preço por Usuário (R$)" type="number" value={selectedClinic.pricePerUser} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, pricePerUser: v })} />
                                             </div>
                                         </div>
-
-                                        <button
-                                            onClick={handleSaveClinicProfile}
-                                            disabled={isSubmitting}
-                                            className="w-full py-5 bg-[#697D58] text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-[#697D58]/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 mt-4"
-                                        >
-                                            {isSubmitting ? 'Salvando...' : 'Salvar Todas as Alterações'}
-                                        </button>
                                     </div>
                                 )}
 
@@ -768,6 +820,174 @@ const SaaSManagement = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {managementTab === 'perfil' && (
+                                <div className="p-6 border-t border-[#8A9A5B]/10 flex-shrink-0 bg-slate-50">
+                                    <button
+                                        onClick={handleSaveClinicProfile}
+                                        disabled={isSubmitting}
+                                        className="w-full py-4 bg-[#697D58] text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-[#697D58]/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                                    >
+                                        {isSubmitting ? 'Salvando...' : 'Salvar Todas as Alterações'}
+                                    </button>
+                                </div>
+                            )}
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Modal de Gestão de Usuário */}
+            <AnimatePresence>
+                {isUserManagementModalOpen && selectedUser && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+                            onClick={() => setIsUserManagementModalOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh]"
+                        >
+                            <div className="bg-[#697D58] p-6 text-white flex justify-between items-center shrink-0">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
+                                        <Users className="text-white" size={24} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-black">Gestão de Usuário</h2>
+                                        <p className="text-[#F0EAD6]/80 text-sm font-medium mt-0.5">{selectedUser.name}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setIsUserManagementModalOpen(false)}
+                                    className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors backdrop-blur-md"
+                                >
+                                    <XIcon size={20} />
+                                </button>
+                            </div>
+
+                            <div className="flex border-b border-[#8A9A5B]/10 shrink-0 overflow-x-auto">
+                                <button
+                                    onClick={() => setUserManagementTab('perfil')}
+                                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap px-4 ${userManagementTab === 'perfil' ? 'text-[#697D58] border-b-2 border-[#697D58] bg-[#8A9A5B]/5' : 'text-slate-400 hover:text-[#8A9A5B] hover:bg-slate-50'}`}
+                                >
+                                    Perfil
+                                </button>
+                                <button
+                                    onClick={() => setUserManagementTab('seguranca')}
+                                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap px-4 ${userManagementTab === 'seguranca' ? 'text-[#697D58] border-b-2 border-[#697D58] bg-[#8A9A5B]/5' : 'text-slate-400 hover:text-[#8A9A5B] hover:bg-slate-50'}`}
+                                >
+                                    Segurança
+                                </button>
+                                <button
+                                    onClick={() => setUserManagementTab('acesso')}
+                                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap px-4 ${userManagementTab === 'acesso' ? 'text-[#697D58] border-b-2 border-[#697D58] bg-[#8A9A5B]/5' : 'text-slate-400 hover:text-[#8A9A5B] hover:bg-slate-50'}`}
+                                >
+                                    Acesso
+                                </button>
+                            </div>
+
+                            <div className="p-6 overflow-y-auto">
+                                {userManagementTab === 'perfil' && (
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <InputField label="Nome Completo" value={selectedUser.name} onChange={(v: any) => setSelectedUser({ ...selectedUser, name: v })} />
+                                            <InputField label="E-mail" value={selectedUser.email} onChange={(v: any) => setSelectedUser({ ...selectedUser, email: v })} />
+
+                                            <SelectField
+                                                label="Cargo (Role)"
+                                                value={selectedUser.role}
+                                                onChange={(v: any) => setSelectedUser({ ...selectedUser, role: v })}
+                                                options={[
+                                                    { value: 'CLINIC_ADMIN', label: 'Administrador de Clínica' },
+                                                    { value: 'ADMIN_GLOBAL', label: 'Administrador Global' }
+                                                ]}
+                                            />
+
+                                            {selectedUser.role !== 'ADMIN_GLOBAL' && (
+                                                <SelectField
+                                                    label="Clínica Vinculada"
+                                                    value={selectedUser.clinicId || ''}
+                                                    onChange={(v: any) => setSelectedUser({ ...selectedUser, clinicId: v })}
+                                                    options={[
+                                                        { value: '', label: 'Nenhuma / Administrador' },
+                                                        ...clinics.map(c => ({ value: c.id, label: c.name }))
+                                                    ]}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {userManagementTab === 'seguranca' && (
+                                    <div className="space-y-8 py-4 text-center">
+                                        <div className="mx-auto w-24 h-24 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                                            <Edit3 size={48} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-black text-slate-800">Redefinir Senha</h4>
+                                            <p className="text-sm font-medium text-slate-500 mt-2 max-w-md mx-auto">
+                                                Ao confirmar, a senha do usuário será redefinida para a senha padrão <strong className="text-orange-600">admin123</strong>.
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={handleResetUserPassword}
+                                            disabled={isSubmitting}
+                                            className="mx-auto block px-8 py-4 bg-orange-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-orange-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30"
+                                        >
+                                            Resetar Senha para "admin123"
+                                        </button>
+                                    </div>
+                                )}
+
+                                {userManagementTab === 'acesso' && (
+                                    <div className="space-y-8 py-4 text-center">
+                                        <div className={`mx-auto w-24 h-24 rounded-full flex items-center justify-center ${selectedUser.isActive !== false ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                            <Users size={48} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-black text-slate-800">Status de Acesso</h4>
+                                            <p className="text-sm font-bold text-slate-400 mt-2">
+                                                O usuário está atualmente <strong className={selectedUser.isActive !== false ? "text-green-600" : "text-red-600"}>{selectedUser.isActive !== false ? 'ATIVO' : 'BLOQUEADO'}</strong>.
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-4">
+                                            <button
+                                                onClick={() => handleUpdateUserStatus(true)}
+                                                disabled={isSubmitting || selectedUser.isActive !== false}
+                                                className="flex-1 py-4 bg-green-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-green-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30"
+                                            >
+                                                Ativar Acesso
+                                            </button>
+                                            <button
+                                                onClick={() => handleUpdateUserStatus(false)}
+                                                disabled={isSubmitting || selectedUser.isActive === false}
+                                                className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-red-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30"
+                                            >
+                                                Bloquear Acesso
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {userManagementTab === 'perfil' && (
+                                <div className="p-6 border-t border-[#8A9A5B]/10 bg-slate-50 shrink-0">
+                                    <button
+                                        onClick={handleUpdateUser}
+                                        disabled={isSubmitting}
+                                        className="w-full py-4 bg-[#697D58] text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-[#697D58]/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                                    >
+                                        {isSubmitting ? 'Salvando...' : 'Salvar Perfil'}
+                                    </button>
+                                </div>
+                            )}
                         </motion.div>
                     </div>
                 )}

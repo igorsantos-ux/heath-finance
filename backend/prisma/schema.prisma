@@ -64,6 +64,7 @@ model User {
   role      String   // "ADMIN_GLOBAL" or "CLINIC_ADMIN"
   clinicId  String?
   clinic    Clinic?  @relation(fields: [clinicId], references: [id])
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 }
 

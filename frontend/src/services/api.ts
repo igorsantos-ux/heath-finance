@@ -52,6 +52,7 @@ export const saasApi = {
     createUser: (data: any) => api.post('saas/users', data),
     getBilling: () => api.get('saas/billing'),
     updateClinic: (id: string, data: any) => api.patch(`saas/clinics/${id}`, data),
+    updateUser: (id: string, data: any) => api.patch(`saas/users/${id}`, data),
     getInvoicePDFUrl: (clinicId: string) => `${api.defaults.baseURL}/saas/billing/${clinicId}/pdf`,
     getInvoiceXMLUrl: (clinicId: string) => `${api.defaults.baseURL}/saas/billing/${clinicId}/xml`,
 };

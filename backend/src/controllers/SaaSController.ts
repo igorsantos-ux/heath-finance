@@ -213,7 +213,47 @@ export class SaaSController {
                 clinicId: user.clinicId
             });
         } catch (error) {
+            console.error('Error creating user:', error);
             res.status(500).json({ error: 'Erro ao criar usuário' });
+        }
+    }
+
+    static async updateUser(req: any, res: Response) {
+        try {
+            const { id } = req.params;
+            const { name, email, role, clinicId, password, isActive } = req.body;
+
+            const data: any = {
+                name,
+                email,
+                role,
+                clinicId: clinicId === '' ? null : clinicId,
+                isActive
+            };
+
+            if (password && password.trim() !== '') {
+                data.password = await AuthService.hashPassword(password);
+            }
+
+            const user = await prisma.user.update({
+                where: { id },
+                data
+            });
+
+            res.json({
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                clinicId: user.clinicId,
+                isActive: user.isActive
+            });
+        } catch (error: any) {
+            console.error('Error updating user:', error);
+            if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
+                return res.status(400).json({ error: 'E-mail já cadastrado por outro usuário.' });
+            }
+            res.status(500).json({ error: 'Erro ao atualizar usuário' });
         }
     }
 
