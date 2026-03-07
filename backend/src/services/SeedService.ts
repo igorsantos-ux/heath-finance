@@ -46,21 +46,22 @@ export class SeedService {
     }
 
     static async runSeed() {
-        // Limpeza
+        // Limpeza (Mantendo usuários para não quebrar sessões ou o admin principal)
         await prisma.transaction.deleteMany();
         await prisma.financialGoal.deleteMany();
         await prisma.lead.deleteMany();
         await prisma.stockItem.deleteMany();
         await prisma.doctor.deleteMany();
         await prisma.customer.deleteMany();
-        await prisma.user.deleteMany();
         await prisma.clinic.deleteMany();
 
         const hashedPassword = await AuthService.hashPassword('admin123');
 
-        // 1. Criar Global Admin (ADMMM)
-        await prisma.user.create({
-            data: {
+        // 1. Upsert Global Admin (ADMMM) - Garante que ele exista após a limpeza de outras tabelas
+        await prisma.user.upsert({
+            where: { email: 'admin@heathfinance.com.br' },
+            update: { password: hashedPassword, role: 'ADMIN_GLOBAL' },
+            create: {
                 name: 'Igor Admin',
                 email: 'admin@heathfinance.com.br',
                 password: hashedPassword,

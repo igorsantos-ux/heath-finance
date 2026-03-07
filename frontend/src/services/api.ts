@@ -10,8 +10,22 @@ api.interceptors.request.use((config) => {
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log(`🚀 Request: ${config.method?.toUpperCase()} ${api.defaults.baseURL}${config.url}`);
     return config;
 });
+
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        console.error('❌ API Error:', {
+            url: error.config?.url,
+            status: error.response?.status,
+            message: error.message,
+            data: error.response?.data
+        });
+        return Promise.reject(error);
+    }
+);
 
 export const authApi = {
     login: (data: any) => api.post('/auth/login', data),
