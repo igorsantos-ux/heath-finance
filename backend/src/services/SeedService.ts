@@ -4,28 +4,37 @@ import { AuthService } from './AuthService.js';
 export class SeedService {
     static async autoSeedIfEmpty() {
         try {
-            const hashedPassword = await AuthService.hashPassword('admin123');
+            console.log('Verificando status do banco de dados...');
+            const adminEmail = 'admin@heathfinance.com.br';
+            const adminPassword = 'admin123';
 
-            // Upsert do Admin Global para garantir que ele sempre exista com a senha correta
-            await prisma.user.upsert({
-                where: { email: 'admin@heathfinance.com.br' },
-                update: { password: hashedPassword, role: 'ADMIN_GLOBAL' },
-                create: {
-                    name: 'Igor Admin',
-                    email: 'admin@heathfinance.com.br',
-                    password: hashedPassword,
-                    role: 'ADMIN_GLOBAL'
-                }
+            // Verifica se o admin mestre já existe
+            const existingAdmin = await prisma.user.findUnique({
+                where: { email: adminEmail }
             });
 
-            console.log('Admin global verificado/atualizado com sucesso! ✅');
+            if (!existingAdmin) {
+                console.log('Admin global não encontrado. Criando com senha padrão...');
+                const hashedPassword = await AuthService.hashPassword(adminPassword);
+                await prisma.user.create({
+                    data: {
+                        name: 'Igor Admin',
+                        email: adminEmail,
+                        password: hashedPassword,
+                        role: 'ADMIN_GLOBAL'
+                    }
+                });
+                console.log('✅ Admin global criado com sucesso!');
+            } else {
+                console.log('✅ Admin global já existe no sistema.');
+            }
 
             // Se for a primeira vez (sem outras clínicas), roda o seed completo
             const clinicCount = await prisma.clinic.count();
             if (clinicCount === 0) {
                 console.log('Nenhuma clínica encontrada. Iniciando seed de dados de teste...');
                 await this.runSeed();
-                console.log('Seed de teste completado! 🚀');
+                console.log('🚀 Seed de teste completado!');
             }
         } catch (error: any) {
             if (error.code === 'P2021') {

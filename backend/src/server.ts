@@ -13,27 +13,24 @@ import { SeedService } from './services/SeedService.js';
 
 dotenv.config();
 
-// Auto-seed se o banco estiver vazio
-SeedService.autoSeedIfEmpty();
-
-const app = express();
-const port = process.env.PORT || 3001;
-
-app.use(cors());
-app.use(express.json());
-
-app.use('/api/auth', authRoutes);
-app.use('/api/saas', saasRoutes);
-app.use('/api/financial', financialRoutes);
-app.use('/api/core', coreRoutes);
-app.use('/api/reporting', reportingRoutes);
-app.use('/api/analytics', analyticsRoutes);
 app.use('/api/history', historyRoutes);
+
+process.on('SIGTERM', () => {
+    console.log('SIGTERM recebido. Encerrando graciosamente...');
+    process.exit(0);
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('Exceção não capturada:', err);
+});
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Heath Finance API is running' });
 });
 
+const port = process.env.PORT || 3001;
+
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
+    SeedService.autoSeedIfEmpty().catch(err => console.error('Erro no auto-seed background:', err));
 });
