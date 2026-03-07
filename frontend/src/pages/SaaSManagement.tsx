@@ -67,6 +67,11 @@ const SaaSManagement = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formSection, setFormSection] = useState<number>(1);
 
+    // Management Modal States
+    const [isManagementModalOpen, setIsManagementModalOpen] = useState(false);
+    const [selectedClinic, setSelectedClinic] = useState<any>(null);
+    const [managementTab, setManagementTab] = useState<'perfil' | 'acesso' | 'usuarios'>('perfil');
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -139,6 +144,40 @@ const SaaSManagement = () => {
         } catch (error: any) {
             const message = error.response?.data?.error || 'Erro ao criar usuário';
             alert(message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleOpenManagement = (clinic: any) => {
+        setSelectedClinic({ ...clinic });
+        setManagementTab('perfil');
+        setIsManagementModalOpen(true);
+    };
+
+    const handleUpdateClinicStatus = async (status: boolean) => {
+        if (!selectedClinic) return;
+        setIsSubmitting(true);
+        try {
+            await saasApi.updateClinic(selectedClinic.id, { isActive: status });
+            setSelectedClinic({ ...selectedClinic, isActive: status });
+            fetchData();
+        } catch (error) {
+            alert('Erro ao atualizar status da clínica');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleSaveClinicProfile = async () => {
+        if (!selectedClinic) return;
+        setIsSubmitting(true);
+        try {
+            await saasApi.updateClinic(selectedClinic.id, selectedClinic);
+            fetchData();
+            setIsManagementModalOpen(false);
+        } catch (error) {
+            alert('Erro ao atualizar dados da clínica');
         } finally {
             setIsSubmitting(false);
         }
@@ -318,7 +357,13 @@ const SaaSManagement = () => {
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <button className="p-2 hover:bg-[#8A9A5B]/10 rounded-lg text-slate-400 hover:text-[#697D58] transition-all">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleOpenManagement(item);
+                                                            }}
+                                                            className="p-2 hover:bg-[#8A9A5B]/10 rounded-lg text-slate-400 hover:text-[#697D58] transition-all"
+                                                        >
                                                             <Settings size={18} />
                                                         </button>
                                                     )}
@@ -531,6 +576,130 @@ const SaaSManagement = () => {
                                     </button>
                                 </form>
                             )}
+                        </motion.div>
+                    </div>
+                )}
+                {isManagementModalOpen && selectedClinic && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-[#1A202C]/60 backdrop-blur-sm overflow-y-auto">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="bg-white rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden"
+                            onClick={(e: any) => e.stopPropagation()}
+                        >
+                            <div className="p-8 border-b border-[#8A9A5B]/10 flex items-center justify-between bg-slate-50">
+                                <div>
+                                    <h3 className="text-2xl font-black text-[#697D58]">Gestão da Clínica</h3>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{selectedClinic.name}</p>
+                                </div>
+                                <button onClick={() => setIsManagementModalOpen(false)} className="p-2 hover:bg-slate-200 rounded-full transition-all">
+                                    <XIcon size={24} className="text-slate-400" />
+                                </button>
+                            </div>
+
+                            <div className="flex border-b border-[#8A9A5B]/10">
+                                {['perfil', 'acesso', 'usuarios'].map((tab: any) => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setManagementTab(tab)}
+                                        className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${managementTab === tab ? 'text-[#697D58] border-b-2 border-[#697D58] bg-[#697D58]/5' : 'text-slate-400 hover:text-slate-600'
+                                            }`}
+                                    >
+                                        {tab}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="p-8 max-h-[60vh] overflow-y-auto">
+                                {managementTab === 'perfil' && (
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <InputField label="Nome Fantasia" value={selectedClinic.name} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, name: v })} />
+                                            <InputField label="Razão Social" value={selectedClinic.razaoSocial} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, razaoSocial: v })} />
+                                            <InputField label="CNPJ" value={selectedClinic.cnpj} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, cnpj: v })} />
+                                            <InputField label="E-mail" value={selectedClinic.email} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, email: v })} />
+                                            <InputField label="Telefone" value={selectedClinic.telefone} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, telefone: v })} />
+                                            <InputField label="Site" value={selectedClinic.site} onChange={(v: any) => setSelectedClinic({ ...selectedClinic, site: v })} />
+                                        </div>
+                                        <button
+                                            onClick={handleSaveClinicProfile}
+                                            disabled={isSubmitting}
+                                            className="w-full py-4 bg-[#697D58] text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-[#697D58]/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                                        >
+                                            {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
+                                        </button>
+                                    </div>
+                                )}
+
+                                {managementTab === 'acesso' && (
+                                    <div className="space-y-8 py-4 text-center">
+                                        <div className={`mx-auto w-24 h-24 rounded-full flex items-center justify-center ${selectedClinic.isActive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                            <Building2 size={48} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-black text-slate-800">Status de Acesso</h4>
+                                            <p className="text-sm font-bold text-slate-400 mt-2">
+                                                A clínica está atualmente <strong>{selectedClinic.isActive ? 'ATIVA' : 'BLOQUEADA'}</strong>.
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-4">
+                                            <button
+                                                onClick={() => handleUpdateClinicStatus(true)}
+                                                disabled={isSubmitting || selectedClinic.isActive}
+                                                className="flex-1 py-4 bg-green-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-green-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30"
+                                            >
+                                                Ativar Acesso
+                                            </button>
+                                            <button
+                                                onClick={() => handleUpdateClinicStatus(false)}
+                                                disabled={isSubmitting || !selectedClinic.isActive}
+                                                className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-red-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30"
+                                            >
+                                                Bloquear Acesso
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {managementTab === 'usuarios' && (
+                                    <div className="space-y-6">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-sm font-black text-[#697D58] uppercase tracking-widest">Usuários Vinculados</h4>
+                                            <button
+                                                onClick={() => {
+                                                    setNewUser({ ...newUser, clinicId: selectedClinic.id });
+                                                    setActiveTab('users');
+                                                    setIsManagementModalOpen(false);
+                                                    setIsModalOpen(true);
+                                                }}
+                                                className="flex items-center gap-2 text-[10px] font-black text-[#8A9A5B] hover:text-[#697D58] transition-all uppercase tracking-widest"
+                                            >
+                                                <Plus size={14} /> Incluir Novo Usuário
+                                            </button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {users.filter(u => u.clinicId === selectedClinic.id).length > 0 ? (
+                                                users.filter(u => u.clinicId === selectedClinic.id).map(u => (
+                                                    <div key={u.id} className="p-4 bg-slate-50 border border-[#8A9A5B]/10 rounded-2xl flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-sm font-black text-slate-700">{u.name}</p>
+                                                            <p className="text-[10px] font-bold text-slate-400">{u.email}</p>
+                                                        </div>
+                                                        <span className="px-3 py-1 bg-[#8A9A5B]/10 text-[#697D58] rounded-full text-[9px] font-black uppercase tracking-tighter">
+                                                            {u.role}
+                                                        </span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-[#8A9A5B]/20">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Nenhum usuário exclusivo vinculado</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </motion.div>
                     </div>
                 )}
