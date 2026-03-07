@@ -9,8 +9,6 @@ import {
     ArrowRight,
     MousePointer2,
     Layout,
-    Calendar,
-    PieChart,
     Activity,
     ChevronLeft,
     ChevronRight,
@@ -117,7 +115,7 @@ const FeatureCarousel = () => {
                         whileHover={{ y: -12 }}
                     >
                         <div className={`w-20 h-20 ${f.color} rounded-3xl flex items-center justify-center relative z-10`}>
-                            {React.cloneElement(f.icon as React.ReactElement, { size: 40 })}
+                            {React.cloneElement(f.icon as React.ReactElement<any>, { size: 40 })}
                         </div>
                         <div className="relative z-10">
                             <h4 className="text-3xl font-black text-[#697D58] mb-4">{f.title}</h4>
