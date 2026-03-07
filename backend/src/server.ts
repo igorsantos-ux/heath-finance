@@ -18,6 +18,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Logger de requisições simples
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
+app.get('/', (req, res) => {
+    res.json({ message: 'Heath Finance API is online' });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/saas', saasRoutes);
 app.use('/api/financial', financialRoutes);
