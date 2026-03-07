@@ -23,5 +23,5 @@ RUN chmod -R +x node_modules/.bin
 
 EXPOSE 3001
 
-# Sincroniza o banco de dados e inicia o servidor
-CMD npx prisma generate && npx prisma db push --accept-data-loss && npx tsx src/server.ts
+# Inicia o servidor usando o script definido no package.json
+CMD ["npm", "start"]
