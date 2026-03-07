@@ -11,7 +11,7 @@ import {
 import { saasApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileDown, CreditCard, Edit3, Check, X as XIcon } from 'lucide-react';
+import { FileDown, CreditCard, Edit3, Check, X as XIcon, Trash2 } from 'lucide-react';
 
 const InputField = ({ label, value, onChange, placeholder = '', type = 'text', required = false }: any) => (
     <div className="space-y-1.5">
@@ -185,6 +185,22 @@ const SaaSManagement = () => {
             alert('Erro ao atualizar dados da clínica');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteClinic = async (clinicId: string, clinicName: string) => {
+        if (!confirm(`TEM CERTEZA ABSOLUTA que deseja excluir a clínica "${clinicName}"? ESTA AÇÃO É IRREVERSÍVEL! TODOS os usuários, faturas, médicos e pacientes vinculados a esta clínica serão excluídos permanentemente.`)) {
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            await saasApi.deleteClinic(clinicId);
+            fetchData();
+        } catch (error: any) {
+            alert(error.response?.data?.error || 'Erro ao excluir clínica');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -413,19 +429,33 @@ const SaaSManagement = () => {
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                if (activeTab === 'clinics') {
-                                                                    handleOpenManagement(item);
-                                                                } else if (activeTab === 'users') {
-                                                                    handleOpenUserManagement(item);
-                                                                }
-                                                            }}
-                                                            className="p-2 hover:bg-[#8A9A5B]/10 rounded-lg text-slate-400 hover:text-[#697D58] transition-all"
-                                                        >
-                                                            <Settings size={18} />
-                                                        </button>
+                                                        <div className="flex items-center gap-1 justify-end">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (activeTab === 'clinics') {
+                                                                        handleOpenManagement(item);
+                                                                    } else if (activeTab === 'users') {
+                                                                        handleOpenUserManagement(item);
+                                                                    }
+                                                                }}
+                                                                className="p-2 hover:bg-[#8A9A5B]/10 rounded-lg text-slate-400 hover:text-[#697D58] transition-all"
+                                                            >
+                                                                <Settings size={18} />
+                                                            </button>
+                                                            {activeTab === 'clinics' && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeleteClinic(item.id, item.name);
+                                                                    }}
+                                                                    className="p-2 hover:bg-red-500/10 rounded-lg text-slate-400 hover:text-red-500 transition-all"
+                                                                    title="Excluir Clínica"
+                                                                >
+                                                                    <Trash2 size={18} />
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     )}
                                                 </td>
                                             </motion.tr>

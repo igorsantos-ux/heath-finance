@@ -173,6 +173,29 @@ export class SaaSController {
         }
     }
 
+    static async deleteClinic(req: any, res: Response) {
+        try {
+            const { id } = req.params;
+
+            // Delete all related records first to avoid foreign key constraints
+            await prisma.$transaction([
+                prisma.transaction.deleteMany({ where: { clinicId: id } }),
+                prisma.doctor.deleteMany({ where: { clinicId: id } }),
+                prisma.customer.deleteMany({ where: { clinicId: id } }),
+                prisma.stockItem.deleteMany({ where: { clinicId: id } }),
+                prisma.financialGoal.deleteMany({ where: { clinicId: id } }),
+                prisma.document.deleteMany({ where: { clinicId: id } }),
+                prisma.user.deleteMany({ where: { clinicId: id } }),
+                prisma.clinic.delete({ where: { id } })
+            ]);
+
+            res.json({ message: 'Clínica e todos os dados vinculados foram excluídos com sucesso' });
+        } catch (error) {
+            console.error('Error deleting clinic:', error);
+            res.status(500).json({ error: 'Erro ao excluir clínica' });
+        }
+    }
+
     // Gestão de Usuários
     static async listUsers(req: any, res: Response) {
         try {

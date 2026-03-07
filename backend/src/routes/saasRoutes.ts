@@ -10,6 +10,7 @@ router.use(authMiddleware, roleMiddleware(['ADMIN_GLOBAL']));
 router.get('/clinics', SaaSController.listClinics);
 router.post('/clinics', SaaSController.createClinic);
 router.patch('/clinics/:id', SaaSController.updateClinic);
+router.delete('/clinics/:id', SaaSController.deleteClinic);
 
 router.get('/users', SaaSController.listUsers);
 router.post('/users', SaaSController.createUser);
