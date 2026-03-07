@@ -32,25 +32,61 @@ export class SaaSController {
                 registroVigilancia, cnes, pricePerUser
             } = req.body;
 
+            const parseDate = (val: any) => {
+                if (!val || typeof val !== 'string' || val.trim() === '') return null;
+                const d = new Date(val);
+                return isNaN(d.getTime()) ? null : d;
+            };
+
+            const parseFloatSafe = (val: any) => {
+                if (val === null || val === undefined || val === '') return null;
+                const f = parseFloat(val);
+                return isNaN(f) ? null : f;
+            };
+
             const clinic = await prisma.clinic.create({
                 data: {
-                    name, razaoSocial, cnpj, inscricaoEstadual, inscricaoMunicipal, cnae, regimeTributario,
-                    dataAbertura: dataAbertura ? new Date(dataAbertura) : null,
-                    cep, logradouro, numero, complemento, bairro, cidade, estado,
-                    telefone, whatsapp, email, site,
+                    name,
+                    razaoSocial,
+                    cnpj: cnpj?.trim() || null,
+                    inscricaoEstadual,
+                    inscricaoMunicipal,
+                    cnae,
+                    regimeTributario,
+                    dataAbertura: parseDate(dataAbertura),
+                    cep: cep?.trim() || null,
+                    logradouro,
+                    numero,
+                    complemento,
+                    bairro,
+                    cidade,
+                    estado,
+                    telefone,
+                    whatsapp,
+                    email,
+                    site,
                     codigoServico,
-                    aliquotaISS: aliquotaISS ? parseFloat(aliquotaISS) : null,
+                    aliquotaISS: parseFloatSafe(aliquotaISS),
                     certificadoDigitalUrl,
-                    banco, agencia, conta, tipoConta, chavePix,
-                    logo, corMarca, responsavelAdmin, responsavelTecnico, crmResponsavel,
-                    registroVigilancia, cnes,
-                    pricePerUser: pricePerUser ? parseFloat(pricePerUser) : 50.0
+                    banco,
+                    agencia,
+                    conta,
+                    tipoConta,
+                    chavePix,
+                    logo,
+                    corMarca,
+                    responsavelAdmin,
+                    responsavelTecnico,
+                    crmResponsavel,
+                    registroVigilancia,
+                    cnes,
+                    pricePerUser: parseFloatSafe(pricePerUser) || 50.0
                 }
             });
             res.status(201).json(clinic);
         } catch (error) {
             console.error('Error creating clinic:', error);
-            res.status(500).json({ error: 'Erro ao criar clínica' });
+            res.status(500).json({ error: 'Erro ao criar clínica. Verifique se o CNPJ já existe ou se as tabelas do banco de dados foram migradas corretamente.' });
         }
     }
 
@@ -67,20 +103,58 @@ export class SaaSController {
                 registroVigilancia, cnes, pricePerUser, isActive
             } = req.body;
 
+            const parseDate = (val: any) => {
+                if (val === undefined) return undefined;
+                if (!val || typeof val !== 'string' || val.trim() === '') return null;
+                const d = new Date(val);
+                return isNaN(d.getTime()) ? null : d;
+            };
+
+            const parseFloatSafe = (val: any) => {
+                if (val === undefined) return undefined;
+                if (val === null || val === '') return null;
+                const f = parseFloat(val);
+                return isNaN(f) ? null : f;
+            };
+
             const clinic = await prisma.clinic.update({
                 where: { id },
                 data: {
-                    name, razaoSocial, cnpj, inscricaoEstadual, inscricaoMunicipal, cnae, regimeTributario,
-                    dataAbertura: dataAbertura ? new Date(dataAbertura) : undefined,
-                    cep, logradouro, numero, complemento, bairro, cidade, estado,
-                    telefone, whatsapp, email, site,
+                    name,
+                    razaoSocial,
+                    cnpj: cnpj !== undefined ? (cnpj?.trim() || null) : undefined,
+                    inscricaoEstadual,
+                    inscricaoMunicipal,
+                    cnae,
+                    regimeTributario,
+                    dataAbertura: parseDate(dataAbertura),
+                    cep: cep !== undefined ? (cep?.trim() || null) : undefined,
+                    logradouro,
+                    numero,
+                    complemento,
+                    bairro,
+                    cidade,
+                    estado,
+                    telefone,
+                    whatsapp,
+                    email,
+                    site,
                     codigoServico,
-                    aliquotaISS: aliquotaISS !== undefined ? parseFloat(aliquotaISS) : undefined,
+                    aliquotaISS: parseFloatSafe(aliquotaISS),
                     certificadoDigitalUrl,
-                    banco, agencia, conta, tipoConta, chavePix,
-                    logo, corMarca, responsavelAdmin, responsavelTecnico, crmResponsavel,
-                    registroVigilancia, cnes,
-                    pricePerUser: pricePerUser !== undefined ? parseFloat(pricePerUser) : undefined,
+                    banco,
+                    agencia,
+                    conta,
+                    tipoConta,
+                    chavePix,
+                    logo,
+                    corMarca,
+                    responsavelAdmin,
+                    responsavelTecnico,
+                    crmResponsavel,
+                    registroVigilancia,
+                    cnes,
+                    pricePerUser: parseFloatSafe(pricePerUser),
                     isActive
                 }
             });
