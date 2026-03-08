@@ -16,12 +16,9 @@ import {
     Line,
     ResponsiveContainer,
     XAxis,
-    YAxis,
     Tooltip,
     AreaChart,
     Area,
-    BarChart,
-    Bar,
     Cell,
     PieChart as RePieChart,
     Pie
