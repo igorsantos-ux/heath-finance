@@ -1,19 +1,31 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-    Target,
     Plus,
     TrendingUp,
     TrendingDown,
-    DollarSign,
     Filter,
     ArrowUpRight,
     ArrowDownRight,
-    Wallet,
-    Percent,
-    PieChart,
+    MessageSquare,
+    Activity,
     ArrowRight
 } from 'lucide-react';
+import {
+    LineChart,
+    Line,
+    ResponsiveContainer,
+    XAxis,
+    YAxis,
+    Tooltip,
+    AreaChart,
+    Area,
+    BarChart,
+    Bar,
+    Cell,
+    PieChart as RePieChart,
+    Pie
+} from 'recharts';
 // import { useQuery } from '@tanstack/react-query';
 // import { financialApi, reportingApi } from '../services/api';
 
@@ -33,7 +45,7 @@ const Dashboard = () => {
     });
     const [isSaving, setIsSaving] = useState(false);
 
-    // Dados Fictícios para Visualização (Mock Data)
+    // Dados Fictícios de Alta Densidade (Mock Data)
     const summary = {
         revenue: 125400,
         balance: 98200,
@@ -41,18 +53,90 @@ const Dashboard = () => {
         pendingReceivables: 42300,
         margin: 78.4,
         projections: { estimatedBalance: 112000 },
-        expenses: 27200
+        expenses: 27200,
+        riskLevel: 40,
+        loanTracking: 85
     };
 
-    const evolution = [
-        { month: 'Set', income: 85000, expenses: 45000 },
-        { month: 'Out', income: 92000, expenses: 42000 },
-        { month: 'Nov', income: 78000, expenses: 38000 },
-        { month: 'Dez', income: 110000, expenses: 55000 },
-        { month: 'Jan', income: 95000, expenses: 48000 },
-        { month: 'Fev', income: 105000, expenses: 42000 },
-        { month: 'Mar', income: 125400, expenses: 27200 }
+    const sparklineData = [
+        { value: 400 }, { value: 700 }, { value: 500 }, { value: 800 },
+        { value: 650 }, { value: 900 }, { value: 750 }, { value: 1100 },
+        { value: 950 }, { value: 1300 }, { value: 1200 }, { value: 1400 }
     ];
+
+    const evolution = [
+        { day: '01', income: 4500, expenses: 2100 },
+        { day: '02', income: 5200, expenses: 2400 },
+        { day: '03', income: 4800, expenses: 2800 },
+        { day: '04', income: 6100, expenses: 3100 },
+        { day: '05', income: 5500, expenses: 2600 },
+        { day: '06', income: 5900, expenses: 2900 },
+        { day: '07', income: 7200, expenses: 1500 },
+        { day: '08', income: 6800, expenses: 2200 },
+        { day: '09', income: 7500, expenses: 1800 },
+        { day: '10', income: 8100, expenses: 2500 },
+        { day: '11', income: 7900, expenses: 2100 },
+        { day: '12', income: 8500, expenses: 1900 },
+        { day: '13', income: 9200, expenses: 2400 },
+        { day: '14', income: 8800, expenses: 2000 },
+        { day: '15', income: 9500, expenses: 2300 }
+    ];
+
+    // Mini Sparkline para KPIs
+    const MiniSparkline = ({ color }: { color: string }) => (
+        <div className="h-8 w-24">
+            <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={sparklineData}>
+                    <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke={color}
+                        strokeWidth={2}
+                        dot={false}
+                        isAnimationActive={true}
+                    />
+                </LineChart>
+            </ResponsiveContainer>
+        </div>
+    );
+
+    // Gráfico de Meia-Lua (Gauge) para Riscos/Metas
+    const GaugeChart = ({ value, label, color }: { value: number, label: string, color: string }) => {
+        const data = [
+            { name: 'Progress', value: value },
+            { name: 'Remaining', value: 100 - value }
+        ];
+
+        return (
+            <div className="relative flex flex-col items-center">
+                <div className="h-32 w-32">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <RePieChart>
+                            <Pie
+                                data={data}
+                                cx="50%"
+                                cy="80%"
+                                startAngle={180}
+                                endAngle={0}
+                                innerRadius={45}
+                                outerRadius={60}
+                                paddingAngle={0}
+                                dataKey="value"
+                                stroke="none"
+                            >
+                                <Cell key="cell-0" fill={color} />
+                                <Cell key="cell-1" fill="#f1f5f9" /> {/* Zinc-100 for light theme track */}
+                            </Pie>
+                        </RePieChart>
+                    </ResponsiveContainer>
+                </div>
+                <div className="absolute top-[55%] text-center">
+                    <p className="text-xl font-black text-[#697D58] leading-none">{value}%</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{label}</p>
+                </div>
+            </div>
+        );
+    };
 
     const handleSaveTransaction = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,172 +171,237 @@ const Dashboard = () => {
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
-            {/* Top Bar / Welcome */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h2 className="text-4xl font-extrabold tracking-tight text-[#697D58]">
-                        Olá, <span className="text-[#8A9A5B]">Roberta</span>!
-                    </h2>
-                    <p className="text-slate-500 font-medium mt-1">Aqui está a visão geral da sua clínica hoje.</p>
+            {/* Dash Header - Micro Stats */}
+            <div className="flex flex-wrap items-end gap-12 mb-4">
+                <div className="flex items-center gap-4">
+                    <span className="text-4xl font-black text-[#697D58] tracking-tighter">165</span>
+                    <div className="flex flex-col">
+                        <MiniSparkline color="#8A9A5B" />
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Novos Pacientes</span>
+                    </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
+                    <span className="text-4xl font-black text-[#697D58] tracking-tighter">16</span>
+                    <div className="flex flex-col">
+                        <MiniSparkline color="#DEB587" />
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Faturas a Vencer</span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-4">
+                    <span className="text-4xl font-black text-[#697D58] tracking-tighter">21</span>
+                    <div className="flex flex-col">
+                        <MiniSparkline color="#8A9A5B" />
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Em Atendimento</span>
+                    </div>
+                </div>
+
+                <div className="ml-auto flex items-center gap-3">
                     <button
                         onClick={() => setIsFilterModalOpen(true)}
-                        className="flex items-center gap-2 px-5 py-3 bg-white border border-[#8A9A5B]/20 rounded-2xl font-bold text-sm text-[#697D58] hover:bg-[#8A9A5B]/5 transition-all shadow-sm"
+                        className="flex items-center gap-2 px-4 py-2 bg-white/50 border border-[#8A9A5B]/10 rounded-xl font-bold text-xs text-[#697D58] hover:bg-white transition-all shadow-sm"
                     >
-                        <Filter size={18} />
+                        <Filter size={14} />
                         {selectedPeriod}
                     </button>
                     <button
-                        onClick={() => setIsTransactionModalOpen(true)}
-                        className="flex items-center gap-2 px-6 py-3 bg-[#8A9A5B] text-white rounded-2xl font-bold text-sm shadow-xl shadow-[#8A9A5B]/20 hover:scale-[1.02] active:scale-95 transition-all"
+                        className="p-2.5 bg-white/50 border border-[#8A9A5B]/10 rounded-xl text-[#697D58] hover:bg-white transition-all shadow-sm"
+                        title="Customização"
                     >
-                        <Plus size={20} />
-                        Novo Lançamento
+                        <Activity size={18} />
                     </button>
                 </div>
             </div>
 
-            {/* Principal KPIs Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <KPICard
-                    title="Faturamento Total"
-                    value={`R$ ${summary?.revenue?.toLocaleString() || '0'}`}
-                    change="+12%"
-                    trend="up"
-                    icon={<DollarSign size={20} />}
-                />
-                <KPICard
-                    title="Recebimentos Líquidos"
-                    value={`R$ ${summary?.balance?.toLocaleString() || '0'}`}
-                    change="+8%"
-                    trend="up"
-                    icon={<Wallet size={20} />}
-                />
-                <KPICard
-                    title="Contas a Pagar"
-                    value={`R$ ${summary?.pendingPayables?.toLocaleString() || '0'}`}
-                    change="-2%"
-                    trend="down"
-                    icon={<TrendingDown size={20} />}
-                />
-                <KPICard
-                    title="Contas a Receber"
-                    value={`R$ ${summary?.pendingReceivables?.toLocaleString() || '0'}`}
-                    change="+15%"
-                    trend="up"
-                    icon={<TrendingUp size={20} />}
-                />
-            </div>
-
-            {/* Secondary KPIs / Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <MetricCard
-                    title="Margem de Contribuição"
-                    value={`${summary?.margin?.toFixed(1) || '0'}%`}
-                    description="Média dos últimos 30 dias"
-                    icon={<Percent size={18} />}
-                />
-                <MetricCard
-                    title="Fluxo de Caixa Projetado"
-                    value={`R$ ${summary?.projections?.estimatedBalance?.toLocaleString() || '0'}`}
-                    description="Expectativa para o fim do mês"
-                    icon={<PieChart size={18} />}
-                />
-                <MetricCard
-                    title="Despesas Totais"
-                    value={`R$ ${summary?.expenses?.toLocaleString() || '0'}`}
-                    description="Fixas e Variáveis consolidadas"
-                    icon={<TrendingDown size={18} />}
-                />
-            </div>
-
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Evolution Chart */}
-                <div className="lg:col-span-2 bg-white/70 backdrop-blur-md p-10 rounded-[2.5rem] border border-[#8A9A5B]/10 shadow-sm">
-                    <div className="flex items-center justify-between mb-10">
-                        <div>
-                            <h3 className="font-extrabold text-2xl text-[#697D58]">Evolução Financeira</h3>
-                            <p className="text-sm text-slate-400 font-medium">Comparativo mensal de receitas e despesas</p>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                {/* Left Column - Detailed Stats */}
+                <div className="lg:col-span-1 space-y-6">
+                    <div className="bg-white/80 backdrop-blur-md p-6 rounded-[2rem] border border-[#8A9A5B]/10 shadow-sm relative overflow-hidden group">
+                        <div className="flex justify-between items-start mb-6">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Taxa de Conversão</span>
+                            <ArrowUpRight size={16} className="text-[#8A9A5B]" />
                         </div>
-                        <div className="flex gap-2">
-                            <span className="flex items-center gap-1.5 text-xs font-bold text-[#8A9A5B]">
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#8A9A5B]"></div> Receita
-                            </span>
-                            <span className="flex items-center gap-1.5 text-xs font-bold text-[#DEB587]">
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#DEB587]"></div> Despesa
-                            </span>
+                        <h4 className="text-2xl font-black text-[#697D58] mb-1">NO.1 CLINIC</h4>
+                        <p className="text-[10px] text-slate-400 font-bold mb-6">#UNIDADE-MATRIZ</p>
+
+                        <div className="flex items-center justify-center mb-6">
+                            <GaugeChart value={78} label="Conversão" color="#8A9A5B" />
                         </div>
-                    </div>
 
-                    <div className="h-80 flex items-end justify-between gap-4 px-2">
-                        {evolution?.map((item: any, i: number) => {
-                            const maxVal = Math.max(...evolution.map((e: any) => e.income), 1000);
-                            const incomeH = (item.income / maxVal) * 100;
-                            const expenseH = (item.expenses / maxVal) * 100;
-
-                            return (
-                                <div key={i} className="flex-1 h-full flex flex-col items-center gap-4 group relative">
-                                    <div className="flex-1 w-full flex justify-center items-end gap-1.5 relative">
-                                        {/* Revenue Bar */}
-                                        <div className="flex flex-col items-center gap-1 w-3 md:w-5 h-full justify-end group/income">
-                                            <span className="opacity-0 group-hover/income:opacity-100 transition-all duration-300 absolute -top-10 text-[11px] font-black text-white bg-[#697D58] px-3 py-1.5 rounded-xl shadow-xl border border-[#8A9A5B]/20 z-10 whitespace-nowrap scale-90 group-hover/income:scale-100 origin-bottom">
-                                                R$ {item.income.toLocaleString('pt-BR')}
-                                            </span>
-                                            <div
-                                                className="w-full bg-[#8A9A5B] rounded-t-lg transition-all duration-500 hover:brightness-110 shadow-sm"
-                                                style={{ height: `${incomeH}%` }}
-                                            ></div>
-                                        </div>
-
-                                        {/* Expense Bar */}
-                                        <div className="flex flex-col items-center gap-1 w-3 md:w-5 h-full justify-end group/expense">
-                                            <span className="opacity-0 group-hover/expense:opacity-100 transition-all duration-300 absolute -top-10 text-[11px] font-black text-white bg-[#DEB587] px-3 py-1.5 rounded-xl shadow-xl border border-[#DEB587]/20 z-10 whitespace-nowrap scale-90 group-hover/expense:scale-100 origin-bottom">
-                                                R$ {item.expenses.toLocaleString('pt-BR')}
-                                            </span>
-                                            <div
-                                                className="w-full bg-[#DEB587] rounded-t-lg transition-all duration-500 hover:brightness-110 shadow-sm"
-                                                style={{ height: `${expenseH}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">{item.month}</span>
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs font-bold text-slate-500">Fixed-Rate</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-black text-[#697D58]">5.82%</span>
+                                    <span className="text-[9px] bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded font-black">+0.24</span>
                                 </div>
-                            );
-                        })}
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs font-bold text-slate-500">ARM</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-black text-[#697D58]">4.47%</span>
+                                    <span className="text-[9px] bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded font-black">+0.16</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-[#697D58] p-6 rounded-[2rem] shadow-xl text-white relative h-64 overflow-hidden group cursor-pointer">
+                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+                        <MessageSquare size={24} className="mb-4 text-[#DEB587]" />
+                        <h5 className="text-lg font-black leading-tight mb-2">Insights do <br />Assistente IA</h5>
+                        <p className="text-xs text-[#F0EAD6]/70 leading-relaxed mb-4">Seu faturamento aumentou 12% em comparação à semana passada. Sugerimos revisar as contas a pagar.</p>
+
+                        <div className="flex flex-wrap gap-2">
+                            {['Risco', 'Tendência', 'Status'].map(t => (
+                                <span key={t} className="text-[9px] font-black bg-white/10 px-2 py-1 rounded-lg border border-white/10">{t}</span>
+                            ))}
+                        </div>
+                        <div className="absolute bottom-6 right-6 p-2 bg-white/20 rounded-full group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform">
+                            <ArrowUpRight size={16} />
+                        </div>
                     </div>
                 </div>
 
-                {/* Info Card / Quick Actions */}
-                <div className="bg-[#697D58] text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col justify-between">
-                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-
-                    <div>
-                        <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mb-8">
-                            <Target size={28} className="text-[#DEB587]" />
-                        </div>
-                        <h4 className="text-2xl font-black mb-4">Metas do Negócio</h4>
-                        <p className="text-[#F0EAD6]/80 font-medium leading-relaxed mb-8">
-                            Você atingiu <span className="text-white font-bold">65%</span> da sua meta de faturamento anual. Faltam R$ 120k para o próximo nível.
-                        </p>
-
-                        <div className="space-y-4">
-                            <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
-                                <span className="text-[#F0EAD6]/60">Progresso Atual</span>
-                                <span>65%</span>
+                {/* Center Column - Large Chart Area */}
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-[#8A9A5B]/10 relative h-[500px]">
+                        <div className="flex justify-between items-start mb-10">
+                            <div>
+                                <h3 className="text-2xl font-black text-[#697D58]">Fluxo de Evolução</h3>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Visão Detalhada Diária</p>
                             </div>
-                            <div className="h-3 bg-black/20 rounded-full overflow-hidden">
-                                <div className="h-full bg-[#DEB587] w-[65%] rounded-full shadow-lg shadow-[#DEB587]/30 transition-all duration-1000"></div>
+                            <div className="flex gap-4">
+                                <div className="flex items-center gap-2 text-[10px] font-black text-slate-400">
+                                    <div className="w-2 h-2 rounded-full bg-[#8A9A5B]"></div> RECEITA
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] font-black text-slate-400">
+                                    <div className="w-2 h-2 rounded-full bg-[#DEB587]"></div> DESPESA
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="h-[340px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={evolution}>
+                                    <defs>
+                                        <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#8A9A5B" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#8A9A5B" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <XAxis
+                                        dataKey="day"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 10, fontWeight: 900, fill: '#cbd5e1' }}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Area type="monotone" dataKey="income" stroke="#8A9A5B" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
+                                    <Area type="monotone" dataKey="expenses" stroke="#DEB587" strokeWidth={2} fill="transparent" strokeDasharray="5 5" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        <div className="absolute bottom-10 left-10 right-10 flex justify-between items-center pt-6 border-t border-slate-50">
+                            <div className="flex gap-8">
+                                <div>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Área Total</p>
+                                    <p className="text-lg font-black text-[#697D58]">2,5K m²</p>
+                                </div>
+                                <div>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor de Mercado</p>
+                                    <p className="text-lg font-black text-[#697D58]">R$ 650k</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsTransactionModalOpen(true)}
+                                className="px-6 py-3 bg-[#8A9A5B] text-white rounded-2xl font-black text-xs shadow-lg shadow-[#8A9A5B]/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                            >
+                                <Plus size={16} /> NOVO LANÇAMENTO
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="bg-white/70 p-8 rounded-[2rem] border border-[#8A9A5B]/10">
+                            <div className="flex justify-between mb-4">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Faturamento</span>
+                                <ArrowUpRight size={14} className="text-[#8A9A5B]" />
+                            </div>
+                            <div className="flex items-end justify-between">
+                                <h4 className="text-2xl font-black text-[#697D58]">R$ {(summary.revenue / 1000).toFixed(1)}k</h4>
+                                <MiniSparkline color="#8A9A5B" />
+                            </div>
+                        </div>
+                        <div className="bg-white/70 p-8 rounded-[2rem] border border-[#8A9A5B]/10">
+                            <div className="flex justify-between mb-4">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Despesas</span>
+                                <ArrowDownRight size={14} className="text-rose-400" />
+                            </div>
+                            <div className="flex items-end justify-between">
+                                <h4 className="text-2xl font-black text-[#697D58]">R$ {(summary.expenses / 1000).toFixed(1)}k</h4>
+                                <MiniSparkline color="#DEB587" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Column - Small Gauges & Community */}
+                <div className="lg:col-span-1 space-y-6">
+                    <div className="bg-white p-8 rounded-[2rem] border border-[#8A9A5B]/10 shadow-sm overflow-hidden">
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Prazos e Metas</h4>
+
+                        <div className="space-y-10">
+                            <div>
+                                <div className="flex justify-between mb-2">
+                                    <span className="text-xs font-black text-[#697D58]">Metas do Trimestre</span>
+                                    <span className="text-xs font-black text-[#8A9A5B]">{summary.loanTracking}%</span>
+                                </div>
+                                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div className="h-full bg-[#8A9A5B] w-[85%] rounded-full shadow-sm shadow-[#8A9A5B]/20"></div>
+                                </div>
+                            </div>
+                            <div className="flex justify-center">
+                                <GaugeChart value={summary.riskLevel} label="Risco Médio" color="#DEB587" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="text-center">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Borrower</p>
+                                    <p className="text-sm font-black text-[#697D58]">19%</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Pending</p>
+                                    <p className="text-sm font-black text-[#697D58]">18%</p>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <button className="mt-12 w-full py-4 bg-[#F0EAD6] text-[#697D58] font-black rounded-2xl shadow-xl hover:bg-white transition-all flex items-center justify-center gap-2 group">
-                        Ver Relatório DRE <ArrowUpRight size={20} className="group-hover:translate-x-1 group-hover:translate-y-[-2px] transition-transform" />
-                    </button>
+                    <div className="bg-gradient-to-br from-[#8A9A5B] to-[#697D58] p-8 rounded-[2rem] shadow-xl text-white relative h-64 flex flex-col justify-between overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-12 translate-x-12 blur-2xl group-hover:scale-125 transition-transform"></div>
+                        <div>
+                            <h5 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-4">Comunidade</h5>
+                            <h4 className="text-lg font-black leading-tight">Conecte-se com <br />outros gestores</h4>
+                        </div>
+                        <div className="flex -space-x-3 mb-4">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="w-10 h-10 rounded-full border-2 border-[#8A9A5B] bg-slate-200 overflow-hidden shadow-sm shadow-black/20">
+                                    <img src={`https://i.pravatar.cc/150?u=${i + 10}`} alt="User" />
+                                </div>
+                            ))}
+                            <div className="w-10 h-10 rounded-full border-2 border-[#8A9A5B] bg-white/20 backdrop-blur-sm flex items-center justify-center text-[10px] font-black">
+                                +2K
+                            </div>
+                        </div>
+                        <button className="w-full py-3 bg-white text-[#697D58] rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-[#F0EAD6] transition-all flex items-center justify-center gap-2">
+                            Acessar Forúm <ArrowRight size={12} />
+                        </button>
+                    </div>
                 </div>
             </div>
+
 
             {/* Filter Modal */}
             {isFilterModalOpen && (
@@ -482,34 +631,5 @@ const Dashboard = () => {
         </div>
     );
 };
-
-const KPICard = ({ title, value, change, trend, icon }: any) => (
-    <div className="bg-white p-8 rounded-[2rem] border border-[#8A9A5B]/10 shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 group cursor-pointer overflow-hidden relative">
-        <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-            {icon}
-        </div>
-        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">{title}</p>
-        <div className="flex flex-col gap-1">
-            <h4 className="text-3xl font-black text-[#1A202C]">{value}</h4>
-            <div className={`flex items-center gap-1.5 text-xs font-black ${trend === 'up' ? 'text-[#8A9A5B]' : 'text-[#DEB587]'}`}>
-                {trend === 'up' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                {change} desde o mês anterior
-            </div>
-        </div>
-    </div>
-);
-
-const MetricCard = ({ title, value, description, icon }: any) => (
-    <div className="bg-white/40 backdrop-blur-sm p-6 rounded-3xl border border-[#8A9A5B]/5 flex items-center gap-5 hover:bg-white transition-all cursor-default group">
-        <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-[#8A9A5B]/10 flex items-center justify-center text-[#8A9A5B] group-hover:scale-110 transition-transform">
-            {icon}
-        </div>
-        <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{title}</p>
-            <h5 className="text-xl font-black text-[#697D58]">{value}</h5>
-            <p className="text-[10px] text-slate-400 font-medium">{description}</p>
-        </div>
-    </div>
-);
 
 export default Dashboard;
