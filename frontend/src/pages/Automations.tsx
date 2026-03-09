@@ -90,15 +90,10 @@ const Automations = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Feegow Integration Card */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden"
-                >
+                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
                     <div className="bg-[#8A9A5B]/10 p-8 border-b border-[#8A9A5B]/10 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#8A9A5B]/20">
-                                <img src="https://ajuda.feegow.com.br/support/home" alt="Feegow" className="w-8 h-8 object-contain opacity-0" onError={(e) => (e.currentTarget.style.display = 'none')} />
                                 <Link2 className="text-[#8A9A5B]" size={24} />
                             </div>
                             <div>
@@ -155,7 +150,7 @@ const Automations = () => {
                             </div>
                         </div>
 
-                        {status && (
+                        {status && !status.message.includes('transações') && (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -186,15 +181,10 @@ const Automations = () => {
                             </button>
                         </div>
                     </div>
-                </motion.div>
+                </div>
 
                 {/* Excel Import Card */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden"
-                >
+                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
                     <div className="bg-[#8A9A5B]/10 p-8 border-b border-[#8A9A5B]/10 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#8A9A5B]/20">
@@ -299,7 +289,7 @@ const Automations = () => {
                             </motion.div>
                         )}
                     </div>
-                </motion.div>
+                </div>
 
                 {/* RD Station integration card */}
                 <div className="bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 p-8 flex flex-col items-center justify-center text-center space-y-4">
