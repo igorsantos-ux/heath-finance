@@ -44,7 +44,7 @@ const Sidebar = () => {
         <aside className="w-72 bg-[#F0EAD6] text-slate-800 flex flex-col h-screen fixed left-0 top-0 z-20 border-r border-[#8A9A5B]/20">
             <div className="p-8">
                 <div className="flex justify-center mb-6">
-                    <img src="/logo-alamino-dark.png" alt="Logo Roberta Alamino" className="h-40 w-auto object-contain" />
+                    <img src="/logo-alamino-dark.png" alt="Logo Rares360" className="h-40 w-auto object-contain" />
                 </div>
             </div>
 

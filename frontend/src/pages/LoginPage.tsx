@@ -56,7 +56,7 @@ const LoginPage = () => {
                 {/* Logo Section */}
                 <div className="flex flex-col items-center mb-10 w-full">
                     <Link to="/" className="flex items-center gap-3 mb-4 group transition-all w-full justify-center">
-                        <img src="/logo-alamino-dark.png" alt="Logo Roberta Alamino" className="w-full max-w-[24rem] h-auto object-contain group-hover:scale-105 transition-transform" />
+                        <img src="/logo-alamino-dark.png" alt="Logo Rares360" className="w-full max-w-[24rem] h-auto object-contain group-hover:scale-105 transition-transform" />
                     </Link>
                 </div>
 
@@ -82,7 +82,7 @@ const LoginPage = () => {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="exemplo@alamino.com"
+                                    placeholder="exemplo@rares360.com"
                                     className="w-full bg-white/60 border border-white/80 rounded-2xl py-5 pl-16 pr-6 focus:ring-4 focus:ring-[#8A9A5B]/10 focus:border-[#8A9A5B] outline-none transition-all font-medium text-slate-700 placeholder:text-slate-400 shadow-sm"
                                 />
                             </div>
@@ -122,7 +122,7 @@ const LoginPage = () => {
                 </div>
 
                 <p className="mt-10 text-center text-slate-500 font-medium">
-                    Ainda não é cliente? <Link to="/about" className="text-[#697D58] font-black border-b-2 border-[#8A9A5B]/20 hover:border-[#697D58] transition-all">Saiba mais sobre a Roberta</Link>
+                    Ainda não é cliente? <Link to="/about" className="text-[#697D58] font-black border-b-2 border-[#8A9A5B]/20 hover:border-[#697D58] transition-all">Saiba mais sobre a Rares360</Link>
                 </p>
             </motion.div>
         </div>

@@ -264,7 +264,7 @@ const SaaSManagement = () => {
                     <h1 className="text-4xl font-extrabold tracking-tight text-[#697D58]">
                         Painel <span className="text-[#8A9A5B]">Global Admin</span>
                     </h1>
-                    <p className="text-slate-500 font-medium mt-1">Bem-vindo, {user?.name}. Gerencie todas as instâncias do Heath Finance.</p>
+                    <p className="text-slate-500 font-medium mt-1">Bem-vindo, {user?.name}. Gerencie todas as instâncias do Rares360.</p>
                 </div>
                 <div className="flex gap-4 w-full md:w-auto">
                     <button
@@ -485,7 +485,7 @@ const SaaSManagement = () => {
                             <h2 className="text-3xl font-black mb-1 text-[#697D58]">
                                 {activeTab === 'clinics' ? 'Configurar Nova Clínica' : 'Cadastrar Novo Usuário'}
                             </h2>
-                            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mb-8">Gestão SaaS Heath Finance</p>
+                            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mb-8">Gestão SaaS Rares360</p>
 
                             {activeTab === 'clinics' ? (
                                 <form onSubmit={handleCreateClinic} className="space-y-8">
@@ -514,7 +514,7 @@ const SaaSManagement = () => {
                                         {/* Section 1: Empresa */}
                                         {formSection === 1 && (
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                                                <InputField label="Nome de Exibição" required value={newClinic.name} onChange={(v: any) => setNewClinic({ ...newClinic, name: v })} placeholder="Ex: Clínica Roberta Alamino" />
+                                                <InputField label="Nome de Exibição" required value={newClinic.name} onChange={(v: any) => setNewClinic({ ...newClinic, name: v })} placeholder="Ex: Clínica Rares360" />
                                                 <InputField label="Razão Social" value={newClinic.razaoSocial} onChange={(v: any) => setNewClinic({ ...newClinic, razaoSocial: v })} />
                                                 <InputField label="CNPJ" required value={newClinic.cnpj} onChange={(v: any) => setNewClinic({ ...newClinic, cnpj: v })} placeholder="00.000.000/0001-00" />
                                                 <div className="grid grid-cols-2 gap-4">

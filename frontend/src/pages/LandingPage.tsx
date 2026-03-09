@@ -153,7 +153,7 @@ const LandingPage = () => {
             {/* Navbar */}
             <nav className="fixed top-0 w-full z-[100] px-8 py-6 flex justify-between items-center backdrop-blur-md bg-white/30 border-b border-[#8A9A5B]/10">
                 <div className="flex items-center gap-2">
-                    <img src="/logo-alamino-dark.png" alt="Logo Roberta Alamino" className="h-28 w-auto object-contain" />
+                    <img src="/logo-alamino-dark.png" alt="Logo Rares360" className="h-28 w-auto object-contain" />
                 </div>
                 <div className="flex items-center gap-8">
                     <Link to="/about" className="text-[#697D58] font-bold hover:opacity-70 transition-opacity">Quem Somos</Link>
@@ -258,7 +258,7 @@ const LandingPage = () => {
                 <FeatureCarousel />
             </section>
 
-            {/* Section 3 - The "Roberta Alamino" Way */}
+            {/* A Experiência Rares360 */}
             <section className="min-h-screen py-32 px-8 bg-white relative">
                 <div className="max-w-4xl mx-auto text-center">
                     <motion.span
@@ -327,9 +327,9 @@ const LandingPage = () => {
                         <div className="w-8 h-8 bg-[#697D58]/10 rounded-lg flex items-center justify-center text-[#697D58]">
                             <TrendingUp size={16} />
                         </div>
-                        <span className="font-black text-[#697D58]">Roberta Alamino</span>
+                        <span className="font-black text-[#697D58]">Rares360</span>
                     </div>
-                    <div>© 2026 Heath Finance. Todos os direitos reservados.</div>
+                    <div>© 2026 Rares360. Todos os direitos reservados.</div>
                     <div className="flex gap-8">
                         <a href="#" className="hover:text-[#697D58] transition-colors">Privacidade</a>
                         <a href="#" className="hover:text-[#697D58] transition-colors">Termos</a>
