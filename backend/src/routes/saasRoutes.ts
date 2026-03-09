@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { SaaSController } from '../controllers/SaaSController.js';
+import { SaaSController, upload } from '../controllers/SaaSController.js';
 import { authMiddleware, roleMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = Router();
@@ -8,6 +8,7 @@ const router = Router();
 router.use(authMiddleware, roleMiddleware(['ADMIN_GLOBAL']));
 
 router.get('/clinics', SaaSController.listClinics);
+router.post('/clinics/upload-logo', upload.single('file'), SaaSController.uploadLogo);
 router.post('/clinics', SaaSController.createClinic);
 router.patch('/clinics/:id', SaaSController.updateClinic);
 router.delete('/clinics/:id', SaaSController.deleteClinic);

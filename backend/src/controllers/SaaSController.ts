@@ -2,6 +2,38 @@ import { Request, Response } from 'express';
 import prisma from '../lib/prisma.js';
 import { AuthService } from '../services/AuthService.js';
 import { BillingService } from '../services/BillingService.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+
+const storage = multer.diskStorage({
+    destination: (req: any, file: any, cb: any) => {
+        const dir = 'uploads/logos';
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        cb(null, dir);
+    },
+    filename: (req: any, file: any, cb: any) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'logo-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+export const upload = multer({
+    storage,
+    fileFilter: (req: any, file: any, cb: any) => {
+        const allowedTypes = /jpeg|jpg|png|webp/;
+        const mimetype = allowedTypes.test(file.mimetype);
+        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+
+        if (mimetype && extname) {
+            return cb(null, true);
+        }
+        cb(new Error('Apenas imagens são permitidas (jpeg, jpg, png, webp)'));
+    },
+    limits: { fileSize: 2 * 1024 * 1024 } // 2MB
+});
 
 export class SaaSController {
     // Gestão de Clínicas
@@ -353,6 +385,23 @@ export class SaaSController {
             res.send(xml);
         } catch (error) {
             res.status(500).json({ error: 'Erro ao gerar XML' });
+        }
+    }
+
+    static async uploadLogo(req: Request, res: Response) {
+        try {
+            const file = (req as any).file;
+            if (!file) {
+                return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+            }
+
+            const protocol = req.protocol;
+            const host = req.get('host');
+            const logoUrl = `${protocol}://${host}/uploads/logos/${file.filename}`;
+
+            res.json({ url: logoUrl });
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
         }
     }
 }

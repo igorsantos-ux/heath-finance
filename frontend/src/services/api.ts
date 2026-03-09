@@ -54,6 +54,9 @@ export const saasApi = {
     updateClinic: (id: string, data: any) => api.patch(`saas/clinics/${id}`, data),
     deleteClinic: (id: string) => api.delete(`saas/clinics/${id}`),
     updateUser: (id: string, data: any) => api.patch(`saas/users/${id}`, data),
+    uploadLogo: (formData: FormData) => api.post('saas/clinics/upload-logo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
     getInvoicePDFUrl: (clinicId: string) => `${api.defaults.baseURL}/saas/billing/${clinicId}/pdf`,
     getInvoiceXMLUrl: (clinicId: string) => `${api.defaults.baseURL}/saas/billing/${clinicId}/xml`,
 };

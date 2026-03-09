@@ -11,7 +11,7 @@ import {
 import { saasApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileDown, CreditCard, Edit3, Check, X as XIcon, Trash2 } from 'lucide-react';
+import { FileDown, CreditCard, Edit3, Check, X as XIcon, Trash2, Image as ImageIcon, Upload } from 'lucide-react';
 
 const InputField = ({ label, value, onChange, placeholder = '', type = 'text', required = false }: any) => (
     <div className="space-y-1.5">
@@ -158,6 +158,28 @@ const SaaSManagement = () => {
         setSelectedClinic({ ...clinic });
         setManagementTab('perfil');
         setIsManagementModalOpen(true);
+    };
+
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, isNew: boolean = false) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await saasApi.uploadLogo(formData);
+            const logoUrl = response.data.url;
+
+            if (isNew) {
+                setNewClinic({ ...newClinic, logo: logoUrl });
+            } else if (selectedClinic) {
+                setSelectedClinic({ ...selectedClinic, logo: logoUrl });
+            }
+        } catch (error) {
+            console.error('Erro ao fazer upload da logo:', error);
+            alert('Erro ao fazer upload da imagem.');
+        }
     };
 
     const handleUpdateClinicStatus = async (status: boolean) => {
@@ -513,23 +535,43 @@ const SaaSManagement = () => {
                                     <div className="min-h-[400px]">
                                         {/* Section 1: Empresa */}
                                         {formSection === 1 && (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                                                <InputField label="Nome de Exibição" required value={newClinic.name} onChange={(v: any) => setNewClinic({ ...newClinic, name: v })} placeholder="Ex: Clínica Rares360" />
-                                                <InputField label="Razão Social" value={newClinic.razaoSocial} onChange={(v: any) => setNewClinic({ ...newClinic, razaoSocial: v })} />
-                                                <InputField label="CNPJ" required value={newClinic.cnpj} onChange={(v: any) => setNewClinic({ ...newClinic, cnpj: v })} placeholder="00.000.000/0001-00" />
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <InputField label="Insc. Estadual" value={newClinic.inscricaoEstadual} onChange={(v: any) => setNewClinic({ ...newClinic, inscricaoEstadual: v })} />
-                                                    <InputField label="Insc. Municipal" value={newClinic.inscricaoMunicipal} onChange={(v: any) => setNewClinic({ ...newClinic, inscricaoMunicipal: v })} />
+                                            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                                                <div className="flex items-center gap-6 p-6 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                                                    <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center border border-slate-100 shadow-sm overflow-hidden flex-shrink-0">
+                                                        {newClinic.logo ? (
+                                                            <img src={newClinic.logo} alt="Preview" className="w-full h-full object-contain p-2" />
+                                                        ) : (
+                                                            <ImageIcon className="text-slate-200" size={32} />
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-xs font-black text-slate-700 uppercase tracking-widest mb-1">Logo da Clínica</p>
+                                                        <p className="text-[10px] text-slate-400 font-bold mb-3">Recomendado: fundo transparente (PNG/WEBP)</p>
+                                                        <label className="inline-flex items-center px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-[#697D58] uppercase tracking-widest cursor-pointer hover:bg-[#8A9A5B]/5 hover:border-[#8A9A5B]/30 transition-all">
+                                                            <Upload size={14} className="mr-2" /> Selecionar Arquivo
+                                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleLogoUpload(e, true)} />
+                                                        </label>
+                                                    </div>
                                                 </div>
-                                                <InputField label="CNAE (Principal)" value={newClinic.cnae} onChange={(v: any) => setNewClinic({ ...newClinic, cnae: v })} />
-                                                <SelectField label="Regime Tributário" value={newClinic.regimeTributario} onChange={(v: any) => setNewClinic({ ...newClinic, regimeTributario: v })} options={[
-                                                    { label: 'Simples Nacional', value: 'SIMPLES' },
-                                                    { label: 'Lucro Presumido', value: 'PRESUMIDO' },
-                                                    { label: 'Lucro Real', value: 'REAL' },
-                                                    { label: 'MEI', value: 'MEI' }
-                                                ]} />
-                                                <InputField label="Data de Abertura" type="date" value={newClinic.dataAbertura} onChange={(v: any) => setNewClinic({ ...newClinic, dataAbertura: v })} />
-                                                <InputField label="Mensalidade Padrão" type="number" value={newClinic.pricePerUser} onChange={(v: any) => setNewClinic({ ...newClinic, pricePerUser: v })} />
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <InputField label="Nome de Exibição" required value={newClinic.name} onChange={(v: any) => setNewClinic({ ...newClinic, name: v })} placeholder="Ex: Clínica Rares360" />
+                                                    <InputField label="Razão Social" value={newClinic.razaoSocial} onChange={(v: any) => setNewClinic({ ...newClinic, razaoSocial: v })} />
+                                                    <InputField label="CNPJ" required value={newClinic.cnpj} onChange={(v: any) => setNewClinic({ ...newClinic, cnpj: v })} placeholder="00.000.000/0001-00" />
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <InputField label="Insc. Estadual" value={newClinic.inscricaoEstadual} onChange={(v: any) => setNewClinic({ ...newClinic, inscricaoEstadual: v })} />
+                                                        <InputField label="Insc. Municipal" value={newClinic.inscricaoMunicipal} onChange={(v: any) => setNewClinic({ ...newClinic, inscricaoMunicipal: v })} />
+                                                    </div>
+                                                    <InputField label="CNAE (Principal)" value={newClinic.cnae} onChange={(v: any) => setNewClinic({ ...newClinic, cnae: v })} />
+                                                    <SelectField label="Regime Tributário" value={newClinic.regimeTributario} onChange={(v: any) => setNewClinic({ ...newClinic, regimeTributario: v })} options={[
+                                                        { label: 'Simples Nacional', value: 'SIMPLES' },
+                                                        { label: 'Lucro Presumido', value: 'PRESUMIDO' },
+                                                        { label: 'Lucro Real', value: 'REAL' },
+                                                        { label: 'MEI', value: 'MEI' }
+                                                    ]} />
+                                                    <InputField label="Data de Abertura" type="date" value={newClinic.dataAbertura} onChange={(v: any) => setNewClinic({ ...newClinic, dataAbertura: v })} />
+                                                    <InputField label="Mensalidade Padrão" type="number" value={newClinic.pricePerUser} onChange={(v: any) => setNewClinic({ ...newClinic, pricePerUser: v })} />
+                                                </div>
                                             </div>
                                         )}
 
@@ -704,6 +746,33 @@ const SaaSManagement = () => {
                             <div className="p-8 max-h-[60vh] overflow-y-auto">
                                 {managementTab === 'perfil' && (
                                     <div className="space-y-8">
+                                        {/* Logo da Clínica */}
+                                        <div className="flex flex-col items-center justify-center p-8 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 group hover:border-[#8A9A5B]/50 transition-all relative overflow-hidden">
+                                            {selectedClinic.logo ? (
+                                                <div className="relative group/logo">
+                                                    <img src={selectedClinic.logo} alt="Logo" className="w-32 h-32 object-contain rounded-2xl bg-white p-2 shadow-sm" />
+                                                    <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover/logo:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <label htmlFor="logo-update" className="cursor-pointer text-white font-black text-[10px] uppercase tracking-widest">Alterar Logo</label>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <label htmlFor="logo-update" className="flex flex-col items-center cursor-pointer">
+                                                    <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-sm text-slate-300 group-hover:text-[#8A9A5B] transition-colors">
+                                                        <Upload size={32} />
+                                                    </div>
+                                                    <p className="mt-4 text-xs font-black text-slate-400 uppercase tracking-widest group-hover:text-[#697D58]">Clique para subir o Logo</p>
+                                                    <p className="mt-1 text-[10px] text-slate-300 font-bold">PNG, JPG ou WEBP (Max 2MB)</p>
+                                                </label>
+                                            )}
+                                            <input
+                                                type="file"
+                                                id="logo-update"
+                                                className="hidden"
+                                                accept="image/*"
+                                                onChange={(e) => handleLogoUpload(e)}
+                                            />
+                                        </div>
+
                                         {/* Seção 1: Dados Cadastrais */}
                                         <div className="space-y-4">
                                             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A9A5B] border-b border-[#8A9A5B]/10 pb-2">Dados Cadastrais</h4>

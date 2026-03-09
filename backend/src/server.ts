@@ -2,6 +2,7 @@ console.log('🚀 Starting Backend Finance Server...');
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 
 import authRoutes from './routes/authRoutes.js';
 import saasRoutes from './routes/saasRoutes.js';
@@ -36,6 +37,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 
 app.get('/', (req, res) => {
     res.json({ message: 'Heath Finance API is online' });
