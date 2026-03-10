@@ -30,6 +30,17 @@ const ExpensesBilling = () => {
         }
     });
 
+    const { data: goalsResponse } = useQuery({
+        queryKey: ['goals-report'],
+        queryFn: () => reportingApi.getGoals()
+    });
+
+    const goals = Array.isArray(goalsResponse?.data) ? goalsResponse.data : [];
+    const profitGoal = goals.find((g: any) => g.type === 'PROFIT');
+    const currentMargin = summary?.revenue > 0 ? (summary?.balance / summary?.revenue) * 100 : 0;
+    const targetMargin = profitGoal ? 25 : 0; // Ideal de 25% se houver meta de lucro
+    const progressPercent = targetMargin > 0 ? Math.min((currentMargin / targetMargin) * 100, 100) : 0;
+
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
             {/* Header */}
@@ -153,15 +164,23 @@ const ExpensesBilling = () => {
                             <TrendingUp size={24} />
                         </div>
                         <h3 className="text-2xl font-black mb-4">Meta de Lucratividade</h3>
-                        <p className="text-[#F0EAD6]/80 font-medium mb-8">O objetivo deste trimestre é elevar a margem líquida para <span className="text-white font-bold">25%</span> através da otimização de custos fixos.</p>
+                        <p className="text-[#F0EAD6]/80 font-medium mb-8">
+                            {targetMargin > 0
+                                ? `O objetivo deste período é elevar a margem líquida para ${targetMargin}% através da otimização de custos.`
+                                : "Defina metas de lucro no menu de Metas para acompanhar sua lucratividade estratégica."
+                            }
+                        </p>
 
                         <div className="space-y-4">
                             <div className="flex justify-between text-xs font-black uppercase tracking-widest">
-                                <span>Progresso Atual</span>
-                                <span>21.4% / 25%</span>
+                                <span>Margem Atual</span>
+                                <span>{currentMargin.toFixed(1)}% {targetMargin > 0 ? `/ ${targetMargin}%` : ''}</span>
                             </div>
                             <div className="h-4 bg-black/20 rounded-full overflow-hidden p-1 shadow-inner">
-                                <div className="h-full bg-[#DEB587] rounded-full transition-all duration-1000 shadow-lg shadow-[#DEB587]/20" style={{ width: '85%' }}></div>
+                                <div
+                                    className="h-full bg-[#DEB587] rounded-full transition-all duration-1000 shadow-lg shadow-[#DEB587]/20"
+                                    style={{ width: `${progressPercent}%` }}
+                                ></div>
                             </div>
                         </div>
                     </div>

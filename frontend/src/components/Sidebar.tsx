@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { reportingApi } from '../services/api';
 
 const Sidebar = () => {
     const location = useLocation();
@@ -24,6 +26,18 @@ const Sidebar = () => {
         logout();
         navigate('/login');
     };
+
+    // Busca metas reais para o indicador global
+    const { data: goalsResponse } = useQuery({
+        queryKey: ['goals-report'],
+        queryFn: () => reportingApi.getGoals(),
+        staleTime: 1000 * 60 * 5 // 5 minutos de cache
+    });
+
+    const goals = Array.isArray(goalsResponse?.data) ? goalsResponse.data : [];
+    const globalProgress = goals.length > 0
+        ? Math.round(goals.reduce((acc: number, g: any) => acc + (Math.min(((g.current || g.achieved || 0) / g.target) * 100, 100)), 0) / goals.length)
+        : 0;
 
     const menuItems = [
         { icon: <LayoutDashboard size={18} />, label: "Dashboard", path: "/dashboard" },
@@ -80,9 +94,12 @@ const Sidebar = () => {
                         <p className="text-xs font-bold text-slate-600">Meta Mensal</p>
                     </div>
                     <div className="h-2 bg-slate-200 rounded-full overflow-hidden mb-2">
-                        <div className="h-full bg-[#8A9A5B] w-[65%] rounded-full shadow-sm shadow-[#8A9A5B]/20 transition-all duration-1000"></div>
+                        <div
+                            className="h-full bg-[#8A9A5B] rounded-full shadow-sm shadow-[#8A9A5B]/20 transition-all duration-1000"
+                            style={{ width: `${globalProgress}%` }}
+                        ></div>
                     </div>
-                    <p className="text-[10px] font-bold text-[#8A9A5B] text-right">65% atingido</p>
+                    <p className="text-[10px] font-bold text-[#8A9A5B] text-right">{globalProgress}% atingido</p>
                 </div>
 
                 <button

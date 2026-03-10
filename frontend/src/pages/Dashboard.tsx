@@ -47,10 +47,17 @@ const Dashboard = () => {
         queryFn: () => financialApi.getEvolution().then(res => res.data)
     });
 
-    const { data: goals, isLoading: isLoadingGoals } = useQuery({
+    const { data: goalsResponse, isLoading: isLoadingGoals } = useQuery({
         queryKey: ['financial-goals'],
         queryFn: () => reportingApi.getGoals().then(res => res.data)
     });
+
+    const goals = Array.isArray(goalsResponse) ? goalsResponse : [];
+    const globalProgress = goals.length > 0
+        ? Math.round(goals.reduce((acc: number, g: any) => acc + (Math.min(((g.current || g.achieved || 0) / g.target) * 100, 100)), 0) / goals.length)
+        : 0;
+
+    const mainGoal = goals[0];
 
     const handleSaveTransaction = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -243,8 +250,8 @@ const Dashboard = () => {
                         </div>
                         <h4 className="text-2xl font-black mb-4">Metas do Negócio</h4>
                         <p className="text-[#F0EAD6]/80 font-medium leading-relaxed mb-8">
-                            {goals?.[0] ? (
-                                <>Você atingiu <span className="text-white font-bold">{goals[0].achieved}%</span> da sua meta. Faltam R$ {(goals[0].target - goals[0].current).toLocaleString()} para o próximo nível.</>
+                            {goals.length > 0 ? (
+                                <>Sua clínica atingiu <span className="text-white font-bold">{globalProgress}%</span> do objetivo global consolidado para este período.</>
                             ) : (
                                 <>Defina suas metas financeiras para acompanhar o crescimento da sua clínica em tempo real.</>
                             )}
@@ -252,13 +259,13 @@ const Dashboard = () => {
 
                         <div className="space-y-4">
                             <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
-                                <span className="text-[#F0EAD6]/60">Progresso Atual</span>
-                                <span>{goals?.[0]?.achieved || 0}%</span>
+                                <span className="text-[#F0EAD6]/60">Progresso Global</span>
+                                <span>{globalProgress}%</span>
                             </div>
                             <div className="h-3 bg-black/20 rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-[#DEB587] rounded-full shadow-lg shadow-[#DEB587]/30 transition-all duration-1000"
-                                    style={{ width: `${goals?.[0]?.achieved || 0}%` }}
+                                    style={{ width: `${globalProgress}%` }}
                                 ></div>
                             </div>
                         </div>
