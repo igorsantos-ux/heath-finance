@@ -11,7 +11,8 @@ import {
     Phone,
     Mail,
     ChevronRight,
-    TrendingUp
+    TrendingUp,
+    Loader2
 } from 'lucide-react';
 
 const PatientsPage = () => {
@@ -25,14 +26,20 @@ const PatientsPage = () => {
         }
     });
 
-    // Mock para visualização se não houver dados
-    const displayPatients = patients?.length > 0 ? patients : [
-        { id: '1', name: 'Ana Oliveira', email: 'ana@email.com', phone: '(11) 98888-7777', lastVisit: '2026-03-01', status: 'Ativo' },
-        { id: '2', name: 'Bruno Santos', email: 'bruno@email.com', phone: '(11) 97777-6666', lastVisit: '2026-02-15', status: 'Ativo' },
-        { id: '3', name: 'Carla Souza', email: 'carla@email.com', phone: '(11) 96666-5555', lastVisit: '2026-03-05', status: 'Inativo' },
-    ].filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    // Filtrar dados reais
+    const displayPatients = (patients || []).filter((p: any) =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-    if (isLoading) return <div className="p-10 text-[#697D58] font-bold">Carregando pacientes...</div>;
+    if (isLoading) {
+        return (
+            <div className="h-[60vh] w-full flex flex-col items-center justify-center gap-4 py-20">
+                <Loader2 className="animate-spin text-[#8A9A5B]" size={48} />
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Carregando base de pacientes...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
@@ -54,26 +61,26 @@ const PatientsPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard
                     title="Total de Pacientes"
-                    value={displayPatients.length + 120}
+                    value={patients?.length || 0}
                     icon={<Users size={20} />}
-                    trend="+12 este mês"
+                    trend={`${patients?.length || 0} cadastrados`}
                 />
                 <StatCard
                     title="Atendimentos Hoje"
-                    value="14"
+                    value="0"
                     icon={<Calendar size={20} />}
-                    trend="85% preenchido"
+                    trend="Aguardando dados"
                 />
                 <StatCard
                     title="Taxa de Retorno"
-                    value="78%"
+                    value="0%"
                     icon={<TrendingUp size={20} />}
-                    trend="Excelente"
+                    trend="Sem dados"
                 />
             </div>
 
             {/* List Section */}
-            <div className="bg-white/70 backdrop-blur-md rounded-[2.5rem] border border-[#8A9A5B]/10 shadow-sm overflow-hidden">
+            <div className="bg-white/70 backdrop-blur-md rounded-[2.5rem] border border-[#8A9A5B]/10 shadow-sm overflow-hidden min-h-[400px]">
                 <div className="p-8 border-b border-[#8A9A5B]/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="relative flex-1 max-w-md">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -92,79 +99,94 @@ const PatientsPage = () => {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="bg-slate-50/50">
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Paciente</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contato</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Última Visita</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                                <th className="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#8A9A5B]/5">
-                            {displayPatients.map((patient: any) => (
-                                <tr key={patient.id} className="hover:bg-[#8A9A5B]/5 transition-colors group cursor-pointer">
-                                    <td className="px-8 py-6">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-[#DEB587]/20 text-[#697D58] rounded-full flex items-center justify-center font-black text-xs">
-                                                {patient.name.split(' ').map((n: string) => n[0]).join('')}
-                                            </div>
-                                            <div>
-                                                <p className="font-black text-slate-700 text-sm">{patient.name}</p>
-                                                <p className="text-[10px] text-slate-400 font-bold">ID: #{patient.id}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 text-slate-500">
-                                                <Phone size={12} />
-                                                <span className="text-xs font-medium">{patient.phone}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-slate-500">
-                                                <Mail size={12} />
-                                                <span className="text-xs font-medium">{patient.email}</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className="flex items-center gap-2 text-slate-600 font-bold text-xs">
-                                            <Calendar size={14} className="text-[#8A9A5B]" />
-                                            {new Date(patient.lastVisit).toLocaleDateString('pt-BR')}
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${patient.status === 'Ativo'
-                                            ? 'bg-[#8A9A5B]/10 text-[#697D58]'
-                                            : 'bg-slate-100 text-slate-400'
-                                            }`}>
-                                            {patient.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-8 py-6 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button className="p-2 hover:bg-white rounded-lg transition-all text-slate-400 hover:text-[#8A9A5B]">
-                                                <MoreHorizontal size={18} />
-                                            </button>
-                                            <button className="p-2 hover:bg-[#8A9A5B] rounded-lg transition-all text-slate-400 hover:text-white">
-                                                <ChevronRight size={18} />
-                                            </button>
-                                        </div>
-                                    </td>
+                    {displayPatients.length === 0 ? (
+                        <div className="py-20 flex flex-col items-center justify-center gap-4">
+                            <Users size={48} className="text-slate-200" />
+                            <p className="text-slate-400 font-bold text-sm uppercase tracking-widest text-center">
+                                {searchTerm ? 'Nenhum paciente encontrado para sua busca' : 'Nenhum paciente cadastrado na clínica'}
+                            </p>
+                        </div>
+                    ) : (
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="bg-slate-50/50">
+                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Paciente</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contato</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Última Visita</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                                    <th className="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Ações</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-[#8A9A5B]/5">
+                                {displayPatients.map((patient: any) => (
+                                    <tr key={patient.id} className="hover:bg-[#8A9A5B]/5 transition-colors group cursor-pointer">
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 bg-[#DEB587]/20 text-[#697D58] rounded-full flex items-center justify-center font-black text-xs">
+                                                    {patient.name.split(' ').map((n: string) => n[0]).join('')}
+                                                </div>
+                                                <div>
+                                                    <p className="font-black text-slate-700 text-sm">{patient.name}</p>
+                                                    <p className="text-[10px] text-slate-400 font-bold">ID: #{patient.id}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <div className="space-y-1">
+                                                {patient.phone && (
+                                                    <div className="flex items-center gap-2 text-slate-500">
+                                                        <Phone size={12} />
+                                                        <span className="text-xs font-medium">{patient.phone}</span>
+                                                    </div>
+                                                )}
+                                                {patient.email && (
+                                                    <div className="flex items-center gap-2 text-slate-500">
+                                                        <Mail size={12} />
+                                                        <span className="text-xs font-medium">{patient.email}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-2 text-slate-600 font-bold text-xs">
+                                                <Calendar size={14} className="text-[#8A9A5B]" />
+                                                {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString('pt-BR') : 'Sem visitas'}
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${patient.status === 'Ativo' || !patient.status
+                                                ? 'bg-[#8A9A5B]/10 text-[#697D58]'
+                                                : 'bg-slate-100 text-slate-400'
+                                                }`}>
+                                                {patient.status || 'Ativo'}
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-6 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button className="p-2 hover:bg-white rounded-lg transition-all text-slate-400 hover:text-[#8A9A5B]">
+                                                    <MoreHorizontal size={18} />
+                                                </button>
+                                                <button className="p-2 hover:bg-[#8A9A5B] rounded-lg transition-all text-slate-400 hover:text-white">
+                                                    <ChevronRight size={18} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
 
-                <div className="p-8 bg-slate-50/30 flex items-center justify-between border-t border-[#8A9A5B]/5">
-                    <p className="text-xs font-bold text-slate-400">Mostrando {displayPatients.length} de {displayPatients.length + 120} pacientes</p>
-                    <div className="flex gap-2">
-                        <button className="px-4 py-2 bg-white border border-[#8A9A5B]/10 rounded-xl text-xs font-bold text-slate-400 cursor-not-allowed">Anterior</button>
-                        <button className="px-4 py-2 bg-white border border-[#8A9A5B]/10 rounded-xl text-xs font-bold text-[#697D58] hover:bg-[#8A9A5B]/5 transition-all">Próximo</button>
+                {displayPatients.length > 0 && (
+                    <div className="p-8 bg-slate-50/30 flex items-center justify-between border-t border-[#8A9A5B]/5">
+                        <p className="text-xs font-bold text-slate-400">Mostrando {displayPatients.length} pacientes</p>
+                        <div className="flex gap-2">
+                            <button className="px-4 py-2 bg-white border border-[#8A9A5B]/10 rounded-xl text-xs font-bold text-slate-400 cursor-not-allowed">Anterior</button>
+                            <button className="px-4 py-2 bg-white border border-[#8A9A5B]/10 rounded-xl text-xs font-bold text-[#697D58] hover:bg-[#8A9A5B]/5 transition-all">Próximo</button>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
