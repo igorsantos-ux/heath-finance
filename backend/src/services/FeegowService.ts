@@ -45,4 +45,48 @@ export class FeegowService {
             throw new Error(`Erro ao buscar pacientes Feegow: ${error.response?.data?.message || error.message}`);
         }
     }
+
+    /**
+     * Busca faturas (contas a pagar/receber) do Feegow.
+     * @param type 'C' para Receber (Crédito), 'D' para Pagar (Débito)
+     */
+    static async getInvoices(token: string, type: 'C' | 'D', dataStart: string, dataEnd: string) {
+        try {
+            const response = await axios.get(`${this.BASE_URL}/financial/list-invoice`, {
+                params: {
+                    tipo_transacao: type,
+                    data_start: dataStart,
+                    data_end: dataEnd
+                },
+                headers: {
+                    'x-access-token': token,
+                    'Content-Type': 'application/json'
+                }
+            });
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Erro ao buscar faturas Feegow: ${error.response?.data?.message || error.message}`);
+        }
+    }
+
+    /**
+     * Busca o plano de contas/categorias financeiras.
+     */
+    static async getFinancialCategories(token: string, type: 'income' | 'expense') {
+        try {
+            const response = await axios.post(`${this.BASE_URL}/core/financial/base/financial-category`, {
+                page: 1,
+                perPage: 1000,
+                type
+            }, {
+                headers: {
+                    'x-access-token': token,
+                    'Content-Type': 'application/json'
+                }
+            });
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Erro ao buscar categorias Feegow: ${error.response?.data?.message || error.message}`);
+        }
+    }
 }
