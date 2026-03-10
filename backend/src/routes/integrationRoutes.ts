@@ -9,5 +9,6 @@ router.use(authMiddleware, tenantMiddleware);
 router.get('/', IntegrationController.getIntegrations);
 router.post('/save', IntegrationController.saveIntegration);
 router.post('/test', IntegrationController.testConnection);
+router.post('/sync', IntegrationController.syncIntegration);
 
 export default router;

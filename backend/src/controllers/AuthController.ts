@@ -16,14 +16,15 @@ export class AuthController {
             });
 
             if (!user) {
-                console.log(`Usuário não encontrado: ${email}`);
+                console.warn(`[AUTH] Falha de login: Usuário NÃO ENCONTRADO (${email})`);
                 return res.status(401).json({ error: 'Credenciais inválidas' });
             }
 
+            console.log(`[AUTH] Usuário encontrado: ${email}. Verificando senha...`);
             const isPasswordValid = await AuthService.comparePasswords(password, user.password);
 
             if (!isPasswordValid) {
-                console.log(`Senha incorreta para o usuário: ${email}`);
+                console.warn(`[AUTH] Falha de login: Senha INCORRETA para ${email}`);
                 return res.status(401).json({ error: 'Credenciais inválidas' });
             }
 

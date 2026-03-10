@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, CheckCircle2, XCircle, Loader2, Link2, ExternalLink, ShieldCheck, FileSpreadsheet, Download, UploadCloud, ArrowRight } from 'lucide-react';
+import { Settings, CheckCircle2, XCircle, Loader2, Link2, ExternalLink, ShieldCheck, FileSpreadsheet, Download, UploadCloud, ArrowRight, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import api from '../services/api';
 
@@ -8,14 +8,29 @@ interface Integration {
     type: string;
     token: string;
     isActive: boolean;
+    settings?: {
+        modules?: {
+            patients?: boolean;
+            appointments?: boolean;
+            financial?: boolean;
+            professionals?: boolean;
+        }
+    };
 }
 
 const Automations = () => {
     const [feegowToken, setFeegowToken] = useState('');
     const [loading, setLoading] = useState(false);
     const [testing, setTesting] = useState(false);
+    const [syncLoading, setSyncLoading] = useState(false);
     const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
     const [integrations, setIntegrations] = useState<Integration[]>([]);
+    const [modules, setModules] = useState({
+        patients: false,
+        appointments: false,
+        financial: false,
+        professionals: false
+    });
 
     useEffect(() => {
         fetchIntegrations();
@@ -28,10 +43,20 @@ const Automations = () => {
             const feegow = response.data.find((i: Integration) => i.type === 'FEEGOW');
             if (feegow) {
                 setFeegowToken(feegow.token);
+                if (feegow.settings?.modules) {
+                    setModules(prev => ({
+                        ...prev,
+                        ...feegow.settings?.modules
+                    }));
+                }
             }
         } catch (error) {
             console.error('Erro ao buscar integrações:', error);
         }
+    };
+
+    const handleToggleModule = (module: keyof typeof modules) => {
+        setModules(prev => ({ ...prev, [module]: !prev[module] }));
     };
 
     const handleTestConnection = async () => {
@@ -59,7 +84,8 @@ const Automations = () => {
             await api.post('/integrations/save', {
                 type: 'FEEGOW',
                 token: feegowToken,
-                isActive: true
+                isActive: true,
+                settings: { modules }
             });
             setStatus({ type: 'success', message: 'Configurações salvas com sucesso!' });
             fetchIntegrations();
@@ -72,6 +98,25 @@ const Automations = () => {
             setLoading(false);
         }
     };
+
+    const handleSync = async () => {
+        setSyncLoading(true);
+        setStatus(null);
+        try {
+            const response = await api.post('/integrations/sync');
+            setStatus({ type: 'success', message: 'Sincronização concluída com sucesso!' });
+            console.log('Sync result:', response.data);
+        } catch (error: any) {
+            setStatus({
+                type: 'error',
+                message: error.response?.data?.message || 'Erro ao sincronizar dados.'
+            });
+        } finally {
+            setSyncLoading(false);
+        }
+    };
+
+    const isFeegowConnected = integrations.find(i => i.type === 'FEEGOW')?.isActive;
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -106,7 +151,7 @@ const Automations = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className={`w-3 h-3 rounded-full ${integrations.find(i => i.type === 'FEEGOW') ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                        <div className={`w-3 h-3 rounded-full ${isFeegowConnected ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></div>
                     </div>
 
                     <div className="p-8 space-y-6">
@@ -127,6 +172,74 @@ const Automations = () => {
                                     className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-[#8A9A5B] focus:bg-white outline-none transition-all font-mono text-sm group-hover:border-slate-200"
                                 />
                                 <ShieldCheck className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">
+                                Módulos de Sincronização
+                            </label>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <button
+                                    onClick={() => handleToggleModule('patients')}
+                                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${modules.patients ? 'bg-[#8A9A5B]/10 border-[#8A9A5B] text-[#8A9A5B]' : 'bg-white border-slate-100 text-slate-400 opacity-60'}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-xl ${modules.patients ? 'bg-white' : 'bg-slate-50'}`}>
+                                            <ShieldCheck size={18} />
+                                        </div>
+                                        <span className="text-sm font-bold">Pacientes</span>
+                                    </div>
+                                    <div className={`w-10 h-6 rounded-full relative transition-colors ${modules.patients ? 'bg-[#8A9A5B]' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${modules.patients ? 'right-1' : 'left-1'}`} />
+                                    </div>
+                                </button>
+
+                                <button
+                                    onClick={() => handleToggleModule('appointments')}
+                                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${modules.appointments ? 'bg-[#8A9A5B]/10 border-[#8A9A5B] text-[#8A9A5B]' : 'bg-white border-slate-100 text-slate-400 opacity-60'}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-xl ${modules.appointments ? 'bg-white' : 'bg-slate-50'}`}>
+                                            <Settings size={18} />
+                                        </div>
+                                        <span className="text-sm font-bold">Agendamentos</span>
+                                    </div>
+                                    <div className={`w-10 h-6 rounded-full relative transition-colors ${modules.appointments ? 'bg-[#8A9A5B]' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${modules.appointments ? 'right-1' : 'left-1'}`} />
+                                    </div>
+                                </button>
+
+                                <button
+                                    onClick={() => handleToggleModule('financial')}
+                                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${modules.financial ? 'bg-[#8A9A5B]/10 border-[#8A9A5B] text-[#8A9A5B]' : 'bg-white border-slate-100 text-slate-400 opacity-60'}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-xl ${modules.financial ? 'bg-white' : 'bg-slate-50'}`}>
+                                            <FileSpreadsheet size={18} />
+                                        </div>
+                                        <span className="text-sm font-bold">Financeiro</span>
+                                    </div>
+                                    <div className={`w-10 h-6 rounded-full relative transition-colors ${modules.financial ? 'bg-[#8A9A5B]' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${modules.financial ? 'right-1' : 'left-1'}`} />
+                                    </div>
+                                </button>
+
+                                <button
+                                    onClick={() => handleToggleModule('professionals')}
+                                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${modules.professionals ? 'bg-[#8A9A5B]/10 border-[#8A9A5B] text-[#8A9A5B]' : 'bg-white border-slate-100 text-slate-400 opacity-60'}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-xl ${modules.professionals ? 'bg-white' : 'bg-slate-50'}`}>
+                                            <Link2 size={18} />
+                                        </div>
+                                        <span className="text-sm font-bold">Profissionais</span>
+                                    </div>
+                                    <div className={`w-10 h-6 rounded-full relative transition-colors ${modules.professionals ? 'bg-[#8A9A5B]' : 'bg-slate-200'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${modules.professionals ? 'right-1' : 'left-1'}`} />
+                                    </div>
+                                </button>
                             </div>
                         </div>
 
@@ -162,6 +275,19 @@ const Automations = () => {
                                 {status.type === 'success' ? <CheckCircle2 size={20} /> : <XCircle size={20} />}
                                 <span className="text-xs font-bold tracking-tight">{status.message}</span>
                             </motion.div>
+                        )}
+
+                        {isFeegowConnected && (
+                            <div className="pt-4 border-t border-slate-100">
+                                <button
+                                    onClick={handleSync}
+                                    disabled={syncLoading}
+                                    className="w-full px-6 py-4 bg-slate-800 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-900 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-slate-200"
+                                >
+                                    {syncLoading ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
+                                    Sincronizar Agora
+                                </button>
+                            </div>
                         )}
 
                         <div className="flex items-center gap-3 pt-2">

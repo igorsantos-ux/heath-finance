@@ -1,14 +1,14 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma.js';
 import { FeegowService } from '../services/FeegowService.js';
+import { FeegowSyncService } from '../services/FeegowSyncService.js';
 
 export class IntegrationController {
     static async saveIntegration(req: Request, res: Response) {
         try {
-            const { type, token, isActive } = req.body;
+            const { type, token, isActive, settings } = req.body;
             let clinicId = (req as any).user?.clinicId;
 
-            // Se for ADMIN_GLOBAL e não tiver clinicId, tenta pegar a primeira clínica
             if (!clinicId && (req as any).user?.role === 'ADMIN_GLOBAL') {
                 const firstClinic = await prisma.clinic.findFirst();
                 clinicId = firstClinic?.id;
@@ -31,13 +31,15 @@ export class IntegrationController {
                 },
                 update: {
                     token,
-                    isActive: isActive ?? true
+                    isActive: isActive ?? true,
+                    settings: settings || undefined
                 },
                 create: {
                     clinicId,
                     type,
                     token,
-                    isActive: isActive ?? true
+                    isActive: isActive ?? true,
+                    settings: settings || undefined
                 }
             });
 
@@ -87,6 +89,27 @@ export class IntegrationController {
             return res.status(400).json({ message: 'Tipo de integração não suportado para teste direto.' });
         } catch (error: any) {
             return res.status(500).json({ message: 'Erro ao testar conexão', error: error.message });
+        }
+    }
+
+    static async syncIntegration(req: Request, res: Response) {
+        try {
+            let clinicId = (req as any).user?.clinicId;
+
+            if (!clinicId && (req as any).user?.role === 'ADMIN_GLOBAL') {
+                const firstClinic = await prisma.clinic.findFirst();
+                clinicId = firstClinic?.id;
+            }
+
+            if (!clinicId) {
+                return res.status(401).json({ message: 'Clínica não identificada' });
+            }
+
+            const results = await FeegowSyncService.syncAll(clinicId);
+            return res.json({ success: true, results });
+        } catch (error: any) {
+            console.error('Erro ao sincronizar integração:', error);
+            return res.status(500).json({ message: 'Erro ao sincronizar dados', error: error.message });
         }
     }
 }
