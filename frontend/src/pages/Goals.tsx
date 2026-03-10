@@ -18,9 +18,16 @@ const Goals = () => {
         queryFn: () => reportingApi.getGoals()
     });
 
-    const goalsData = response?.data || {
-        summary: { globalProgress: 0, achieved: 0, delayed: 0 },
-        goals: []
+    // A API retorna um array direto de metas [FinancialGoal]
+    const goalsList = Array.isArray(response?.data) ? response.data : [];
+
+    // Calcular resumo localmente caso não venha do backend
+    const summary = {
+        globalProgress: goalsList.length > 0
+            ? Math.round(goalsList.reduce((acc: number, g: any) => acc + (Math.min((g.current / g.target) * 100, 100)), 0) / goalsList.length)
+            : 0,
+        achieved: goalsList.filter((g: any) => g.current >= g.target).length,
+        delayed: 0 // Backend ainda não envia status de atraso
     };
 
     if (isLoading) {
@@ -56,17 +63,17 @@ const Goals = () => {
                 </div>
                 <div className="relative z-10 flex-1">
                     <h3 className="text-3xl font-black mb-4">
-                        {goalsData.summary.globalProgress > 50 ? 'Você está no caminho certo!' : 'Continue focado nos objetivos!'}
+                        {summary.globalProgress > 50 ? 'Você está no caminho certo!' : 'Continue focado nos objetivos!'}
                     </h3>
                     <p className="text-[#F0EAD6]/80 font-medium text-lg leading-relaxed mb-8 max-w-2xl">
-                        Este período sua clínica atingiu <span className="text-white font-black text-xl">{goalsData.summary.globalProgress}%</span> do objetivo global. {goalsData.summary.globalProgress < 10 && 'Inicie lançamentos reais para acompanhar o progresso.'}
+                        Este período sua clínica atingiu <span className="text-white font-black text-xl">{summary.globalProgress}%</span> do objetivo global. {summary.globalProgress < 10 && 'Inicie lançamentos reais para acompanhar o progresso.'}
                     </p>
                     <div className="flex flex-wrap gap-4">
                         <span className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-xs font-black uppercase tracking-widest">
-                            <CheckCircle2 size={16} /> {goalsData.summary.achieved} Metas Batidas
+                            <CheckCircle2 size={16} /> {summary.achieved} Metas Batidas
                         </span>
                         <span className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-xs font-black uppercase tracking-widest">
-                            <Flame size={16} /> {goalsData.summary.delayed} Em Atraso
+                            <Flame size={16} /> {summary.delayed} Em Atraso
                         </span>
                     </div>
                 </div>
@@ -74,7 +81,7 @@ const Goals = () => {
 
             {/* Goals Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 min-h-[400px]">
-                {goalsData.goals.length === 0 ? (
+                {goalsList.length === 0 ? (
                     <div className="col-span-full py-20 flex flex-col items-center justify-center gap-4 bg-white/50 rounded-[2.5rem] border border-[#8A9A5B]/10">
                         <Target size={48} className="text-slate-200" />
                         <p className="text-slate-400 font-bold text-sm uppercase tracking-widest text-center">
@@ -82,7 +89,7 @@ const Goals = () => {
                         </p>
                     </div>
                 ) : (
-                    goalsData.goals.map((goal: any) => (
+                    goalsList.map((goal: any) => (
                         <div key={goal.id} className="bg-white p-8 rounded-[2.5rem] border border-[#8A9A5B]/10 shadow-sm hover:shadow-xl transition-all group">
                             <div className="flex justify-between items-start mb-8">
                                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${goal.type === 'finance' ? 'bg-[#8A9A5B]/10 text-[#8A9A5B]' :
@@ -92,24 +99,24 @@ const Goals = () => {
                                     {goal.type === 'finance' ? <BarChart3 size={28} /> : goal.type === 'growth' ? <TrendingUp size={28} /> : <Target size={28} />}
                                 </div>
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                                    <Clock size={12} /> {goal.deadline}
+                                    <Clock size={12} /> {goal.deadline || 'Mensal'}
                                 </span>
                             </div>
 
-                            <h4 className="text-xl font-black text-[#697D58] mb-2">{goal.title}</h4>
+                            <h4 className="text-xl font-black text-[#697D58] mb-2">{goal.title || (goal.type === 'PROFIT' ? 'Meta de Lucro' : 'Objetivo')}</h4>
 
                             <div className="mb-6">
                                 <div className="flex justify-between items-end mb-3">
                                     <span className="text-2xl font-black text-slate-800">
-                                        {goal.type === 'finance' ? `R$ ${goal.current.toLocaleString('pt-BR')}` : goal.type === 'efficiency' ? `${goal.current}%` : goal.current}
+                                        {goal.type === 'finance' || goal.type === 'PROFIT' ? `R$ ${(goal.current || goal.achieved || 0).toLocaleString('pt-BR')}` : goal.type === 'efficiency' ? `${goal.current}%` : goal.current}
                                     </span>
-                                    <span className="text-xs font-bold text-slate-400">Objetivo: {goal.type === 'finance' ? `R$ ${goal.target.toLocaleString('pt-BR')}` : goal.type === 'efficiency' ? `${goal.target}%` : goal.target}</span>
+                                    <span className="text-xs font-bold text-slate-400">Objetivo: {goal.type === 'finance' || goal.type === 'PROFIT' ? `R$ ${goal.target.toLocaleString('pt-BR')}` : goal.type === 'efficiency' ? `${goal.target}%` : goal.target}</span>
                                 </div>
                                 <div className="h-4 bg-slate-100 rounded-full overflow-hidden p-1 shadow-inner">
                                     <div
-                                        className={`h-full rounded-full transition-all duration-1000 shadow-md ${goal.type === 'finance' ? 'bg-[#8A9A5B]' : 'bg-[#DEB587]'
+                                        className={`h-full rounded-full transition-all duration-1000 shadow-md ${goal.type === 'finance' || goal.type === 'PROFIT' ? 'bg-[#8A9A5B]' : 'bg-[#DEB587]'
                                             }`}
-                                        style={{ width: `${Math.min((goal.current / goal.target) * 100, 100)}%` }}
+                                        style={{ width: `${Math.min(((goal.current || goal.achieved || 0) / goal.target) * 100, 100)}%` }}
                                     ></div>
                                 </div>
                             </div>
