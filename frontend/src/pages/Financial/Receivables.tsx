@@ -6,7 +6,6 @@ import {
     Search,
     CheckCircle2,
     AlertCircle,
-    Clock,
     Filter,
     Plus,
     MoreVertical,
