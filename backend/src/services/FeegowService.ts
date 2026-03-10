@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export class FeegowService {
-    private static BASE_URL = 'https://api.feegow.com.br/v1';
+    private static BASE_URL = 'https://api.feegow.com.br/v1/api';
 
     /**
      * Valida o token x-access-token fazendo uma chamada simples à API do Feegow.
@@ -9,7 +9,7 @@ export class FeegowService {
      */
     static async validateToken(token: string): Promise<boolean> {
         try {
-            const response = await axios.get(`${this.BASE_URL}/unidades/listar`, {
+            const response = await axios.get(`${this.BASE_URL}/company/list-unity`, {
                 headers: {
                     'x-access-token': token,
                     'Content-Type': 'application/json'
@@ -30,7 +30,7 @@ export class FeegowService {
      */
     static async getPatients(token: string) {
         try {
-            const response = await axios.get(`${this.BASE_URL}/pacientes/listar`, {
+            const response = await axios.get(`${this.BASE_URL}/patient/list`, {
                 headers: {
                     'x-access-token': token,
                     'Content-Type': 'application/json'
