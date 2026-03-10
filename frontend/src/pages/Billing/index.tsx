@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { reportingApi } from '../../services/api';
+import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { reportingApi, integrationApi } from '../../services/api';
 import {
     BarChart3,
     Users,
@@ -7,10 +8,14 @@ import {
     TrendingUp,
     Calendar,
     Filter,
-    Download
+    Download,
+    RefreshCw,
+    Loader2
 } from 'lucide-react';
 
 const BillingPage = () => {
+    const queryClient = useQueryClient();
+    const [isSyncing, setIsSyncing] = useState(false);
 
     const { data: billingData, isLoading } = useQuery({
         queryKey: ['billing-analytics'],
@@ -20,7 +25,34 @@ const BillingPage = () => {
         }
     });
 
-    if (isLoading) return <div className="p-10 text-[#697D58] font-bold font-['Inter']">Carregando faturamento...</div>;
+    // Gatilho de Sincronização Automática On-Demand
+    useEffect(() => {
+        const triggerSync = async () => {
+            try {
+                // Verifica se a integração está ativa antes de disparar (opcional, o backend já valida)
+                setIsSyncing(true);
+                await integrationApi.sync('finance');
+                // Invalida a query para forçar o reload dos dados novos
+                queryClient.invalidateQueries({ queryKey: ['billing-analytics'] });
+                console.log('✅ Dados financeiros atualizados com Feegow via auto-sync.');
+            } catch (error) {
+                console.warn('Auto-sync Feegow ignorado ou falhou:', error);
+            } finally {
+                setIsSyncing(false);
+            }
+        };
+
+        triggerSync();
+    }, [queryClient]);
+
+    if (isLoading) return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-50/50">
+            <div className="flex flex-col items-center gap-4">
+                <Loader2 className="w-10 h-10 text-[#8A9A5B] animate-spin" />
+                <p className="text-[#697D58] font-bold animate-pulse">Carregando painel de faturamento...</p>
+            </div>
+        </div>
+    );
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
@@ -28,7 +60,15 @@ const BillingPage = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-[#697D58]">Faturamento Detalhado</h2>
-                    <p className="text-slate-500 font-medium mt-1">Análise de performance por médico e categoria.</p>
+                    <div className="flex items-center gap-4 mt-1">
+                        <p className="text-slate-500 font-medium">Análise de performance por médico e categoria.</p>
+                        {isSyncing && (
+                            <div className="flex items-center gap-2 px-3 py-1 bg-[#8A9A5B]/10 border border-[#8A9A5B]/20 rounded-full animate-in fade-in zoom-in duration-300">
+                                <RefreshCw className="w-3 h-3 text-[#8A9A5B] animate-spin" />
+                                <span className="text-[10px] font-black text-[#697D58] uppercase tracking-widest">Atualizando com Feegow...</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <button className="flex items-center gap-2 px-5 py-3 bg-white border border-[#8A9A5B]/20 rounded-2xl font-bold text-sm text-[#697D58] hover:bg-[#8A9A5B]/5 transition-all shadow-sm">

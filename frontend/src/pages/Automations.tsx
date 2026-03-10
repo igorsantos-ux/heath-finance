@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, CheckCircle2, XCircle, Loader2, Link2, ExternalLink, ShieldCheck, FileSpreadsheet, Download, UploadCloud, ArrowRight, RefreshCw } from 'lucide-react';
+import { Settings, CheckCircle2, XCircle, Loader2, Link2, ExternalLink, ShieldCheck, FileSpreadsheet, Download, UploadCloud, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import api from '../services/api';
 
@@ -22,7 +22,6 @@ const Automations = () => {
     const [feegowToken, setFeegowToken] = useState('');
     const [loading, setLoading] = useState(false);
     const [testing, setTesting] = useState(false);
-    const [syncLoading, setSyncLoading] = useState(false);
     const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
     const [integrations, setIntegrations] = useState<Integration[]>([]);
     const [modules, setModules] = useState({
@@ -99,23 +98,6 @@ const Automations = () => {
         }
     };
 
-    const handleSync = async () => {
-        setSyncLoading(true);
-        setStatus(null);
-        try {
-            const response = await api.post('/integrations/sync');
-            setStatus({ type: 'success', message: 'Sincronização concluída com sucesso!' });
-            console.log('Sync result:', response.data);
-        } catch (error: any) {
-            setStatus({
-                type: 'error',
-                message: error.response?.data?.message || 'Erro ao sincronizar dados.'
-            });
-        } finally {
-            setSyncLoading(false);
-        }
-    };
-
     const isFeegowConnected = integrations.find(i => i.type === 'FEEGOW')?.isActive;
 
     return (
@@ -151,7 +133,12 @@ const Automations = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className={`w-3 h-3 rounded-full ${isFeegowConnected ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                        <div className="flex items-center gap-3">
+                            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${isFeegowConnected ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
+                                <div className={`w-1.5 h-1.5 rounded-full ${isFeegowConnected ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                                {isFeegowConnected ? 'Ativo' : 'Offline'}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="p-8 space-y-6">
@@ -275,19 +262,6 @@ const Automations = () => {
                                 {status.type === 'success' ? <CheckCircle2 size={20} /> : <XCircle size={20} />}
                                 <span className="text-xs font-bold tracking-tight">{status.message}</span>
                             </motion.div>
-                        )}
-
-                        {isFeegowConnected && (
-                            <div className="pt-4 border-t border-slate-100">
-                                <button
-                                    onClick={handleSync}
-                                    disabled={syncLoading}
-                                    className="w-full px-6 py-4 bg-slate-800 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-900 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-slate-200"
-                                >
-                                    {syncLoading ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
-                                    Sincronizar Agora
-                                </button>
-                            </div>
                         )}
 
                         <div className="flex items-center gap-3 pt-2">

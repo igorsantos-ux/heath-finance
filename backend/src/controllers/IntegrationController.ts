@@ -94,6 +94,7 @@ export class IntegrationController {
 
     static async syncIntegration(req: Request, res: Response) {
         try {
+            const { module } = req.query as { module?: string };
             let clinicId = (req as any).user?.clinicId;
 
             if (!clinicId && (req as any).user?.role === 'ADMIN_GLOBAL') {
@@ -105,7 +106,7 @@ export class IntegrationController {
                 return res.status(401).json({ message: 'Clínica não identificada' });
             }
 
-            const results = await FeegowSyncService.syncAll(clinicId);
+            const results = await FeegowSyncService.syncAll(clinicId, module);
             return res.json({ success: true, results });
         } catch (error: any) {
             console.error('Erro ao sincronizar integração:', error);

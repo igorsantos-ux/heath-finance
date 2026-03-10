@@ -2,7 +2,7 @@ import prisma from '../lib/prisma.js';
 import { FeegowService } from './FeegowService.js';
 
 export class FeegowSyncService {
-    static async syncAll(clinicId: string) {
+    static async syncAll(clinicId: string, requestedModule?: string) {
         const integration = await prisma.integration.findUnique({
             where: { clinicId_type: { clinicId, type: 'FEEGOW' } }
         });
@@ -15,16 +15,28 @@ export class FeegowSyncService {
         const modules = settings?.modules || {};
         const results: any = {};
 
+        // Se um módulo específico foi solicitado, sincronizamos apenas ele (ignora settings se for chamado explicitamente)
+        if (requestedModule) {
+            if (requestedModule === 'patients') {
+                results.patients = await this.syncPatients(clinicId, integration.token);
+            } else if (requestedModule === 'financial' || requestedModule === 'finance') {
+                results.finance = await this.syncFinance(clinicId, integration.token);
+            } else if (requestedModule === 'appointments') {
+                results.appointments = { message: 'Módulo de agendamentos em desenvolvimento' };
+            }
+            return results;
+        }
+
+        // Caso contrário, sincroniza tudo conforme as configurações
         if (modules.patients) {
             results.patients = await this.syncPatients(clinicId, integration.token);
         }
 
         if (modules.appointments) {
-            // results.appointments = await this.syncAppointments(clinicId, integration.token);
             results.appointments = { message: 'Módulo de agendamentos em desenvolvimento' };
         }
 
-        if (modules.finance) {
+        if (modules.financial || modules.finance) {
             results.finance = await this.syncFinance(clinicId, integration.token);
         }
 

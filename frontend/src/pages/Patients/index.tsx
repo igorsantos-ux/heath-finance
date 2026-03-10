@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { coreApi } from '../../services/api';
+import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { coreApi, integrationApi } from '../../services/api';
 import {
     Users,
     Search,
@@ -12,11 +12,14 @@ import {
     Mail,
     ChevronRight,
     TrendingUp,
-    Loader2
+    Loader2,
+    RefreshCw
 } from 'lucide-react';
 
 const PatientsPage = () => {
+    const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
+    const [isSyncing, setIsSyncing] = useState(false);
 
     const { data: patients, isLoading } = useQuery({
         queryKey: ['patients'],
@@ -25,6 +28,24 @@ const PatientsPage = () => {
             return response.data;
         }
     });
+
+    // Gatilho de Sincronização Automática On-Demand (Pacientes)
+    useEffect(() => {
+        const triggerSync = async () => {
+            try {
+                setIsSyncing(true);
+                await integrationApi.sync('patients');
+                queryClient.invalidateQueries({ queryKey: ['patients'] });
+                console.log('✅ Base de pacientes sincronizada com Feegow.');
+            } catch (error) {
+                console.warn('Auto-sync Pacientes ignorado ou falhou:', error);
+            } finally {
+                setIsSyncing(false);
+            }
+        };
+
+        triggerSync();
+    }, [queryClient]);
 
     // Filtrar dados reais
     const displayPatients = (patients || []).filter((p: any) =>
@@ -47,7 +68,15 @@ const PatientsPage = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-[#697D58]">Pacientes</h2>
-                    <p className="text-slate-500 font-medium mt-1">Gestão completa da base de clientes da clínica.</p>
+                    <div className="flex items-center gap-4 mt-1">
+                        <p className="text-slate-500 font-medium">Gestão completa da base de clientes da clínica.</p>
+                        {isSyncing && (
+                            <div className="flex items-center gap-2 px-3 py-1 bg-[#8A9A5B]/10 border border-[#8A9A5B]/20 rounded-full animate-in fade-in zoom-in duration-300">
+                                <RefreshCw className="w-3 h-3 text-[#8A9A5B] animate-spin" />
+                                <span className="text-[10px] font-black text-[#697D58] uppercase tracking-widest">Sincronizando...</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <button className="flex items-center gap-2 px-6 py-3 bg-[#8A9A5B] text-white rounded-2xl font-bold text-sm shadow-xl shadow-[#8A9A5B]/20 hover:scale-[1.02] active:scale-95 transition-all">

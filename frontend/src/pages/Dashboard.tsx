@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
     Target,
@@ -13,14 +13,38 @@ import {
     Percent,
     PieChart,
     ArrowRight,
-    Loader2
+    Loader2,
+    RefreshCw
 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { financialApi, reportingApi } from '../services/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { financialApi, reportingApi, integrationApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
     const { user } = useAuth();
+    const queryClient = useQueryClient();
+    const [isSyncing, setIsSyncing] = useState(false);
+    
+    // Gatilho de Sincronização Automática On-Demand (Geral)
+    useEffect(() => {
+        const triggerSync = async () => {
+            try {
+                setIsSyncing(true);
+                // No Dashboard, disparamos a sincronização financeira (módulo mais crítico aqui)
+                await integrationApi.sync('finance');
+                // Invalida todas as queries financeiras relacionadas
+                queryClient.invalidateQueries({ queryKey: ['dashboard-kpis'] });
+                queryClient.invalidateQueries({ queryKey: ['financial-evolution'] });
+                console.log('✅ Dashboard sincronizado com Feegow.');
+            } catch (error) {
+                console.warn('Auto-sync Dashboard ignorado ou falhou:', error);
+            } finally {
+                setIsSyncing(false);
+            }
+        };
+
+        triggerSync();
+    }, [queryClient]);
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [selectedPeriod, setSelectedPeriod] = useState('Este Mês');
@@ -108,7 +132,15 @@ const Dashboard = () => {
                     <h2 className="text-4xl font-extrabold tracking-tight text-[#697D58]">
                         Olá, <span className="text-[#8A9A5B]">{user?.name?.split(' ')[0] || 'Gestor'}</span>!
                     </h2>
-                    <p className="text-slate-500 font-medium mt-1">Aqui está a visão geral da sua clínica hoje.</p>
+                    <div className="flex items-center gap-4 mt-1">
+                        <p className="text-slate-500 font-medium">Aqui está a visão geral da sua clínica hoje.</p>
+                        {isSyncing && (
+                            <div className="flex items-center gap-2 px-3 py-1 bg-[#8A9A5B]/10 border border-[#8A9A5B]/20 rounded-full animate-in fade-in zoom-in duration-300">
+                                <RefreshCw className="w-3 h-3 text-[#8A9A5B] animate-spin" />
+                                <span className="text-[10px] font-black text-[#697D58] uppercase tracking-widest">Sincronizando com Feegow...</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <button

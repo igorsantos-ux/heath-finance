@@ -96,4 +96,11 @@ export const analyticsApi = {
     getInsights: () => api.get('analytics/insights'),
 };
 
+export const integrationApi = {
+    getIntegrations: () => api.get('integrations'),
+    saveIntegration: (data: any) => api.post('integrations/save', data),
+    testConnection: (data: any) => api.post('integrations/test', data),
+    sync: (module?: string) => api.post(`integrations/sync${module ? `?module=${module}` : ''}`),
+};
+
 export default api;
