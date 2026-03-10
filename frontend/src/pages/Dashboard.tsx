@@ -57,7 +57,6 @@ const Dashboard = () => {
         ? Math.round(goals.reduce((acc: number, g: any) => acc + (Math.min(((g.current || g.achieved || 0) / g.target) * 100, 100)), 0) / goals.length)
         : 0;
 
-    const mainGoal = goals[0];
 
     const handleSaveTransaction = async (e: React.FormEvent) => {
         e.preventDefault();
