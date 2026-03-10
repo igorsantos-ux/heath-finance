@@ -6,10 +6,16 @@ export class IntegrationController {
     static async saveIntegration(req: Request, res: Response) {
         try {
             const { type, token, isActive } = req.body;
-            const clinicId = (req as any).user?.clinicId;
+            let clinicId = (req as any).user?.clinicId;
+
+            // Se for ADMIN_GLOBAL e não tiver clinicId, tenta pegar a primeira clínica
+            if (!clinicId && (req as any).user?.role === 'ADMIN_GLOBAL') {
+                const firstClinic = await prisma.clinic.findFirst();
+                clinicId = firstClinic?.id;
+            }
 
             if (!clinicId) {
-                return res.status(401).json({ message: 'Clínica não identificada' });
+                return res.status(401).json({ message: 'Clínica não identificada. Administradores globais precisam ter ao menos uma clínica cadastrada.' });
             }
 
             if (!token) {
@@ -44,7 +50,12 @@ export class IntegrationController {
 
     static async getIntegrations(req: Request, res: Response) {
         try {
-            const clinicId = (req as any).user?.clinicId;
+            let clinicId = (req as any).user?.clinicId;
+
+            if (!clinicId && (req as any).user?.role === 'ADMIN_GLOBAL') {
+                const firstClinic = await prisma.clinic.findFirst();
+                clinicId = firstClinic?.id;
+            }
 
             if (!clinicId) {
                 return res.status(401).json({ message: 'Clínica não identificada' });
