@@ -120,23 +120,34 @@ export class FeegowSyncService {
             const invoicesC = await FeegowService.getInvoices(token, 'C', dataStart, dataEnd);
             const invoicesD = await FeegowService.getInvoices(token, 'D', dataStart, dataEnd);
             
-            const allInvoices = [...(invoicesC?.content || []), ...(invoicesD?.content || [])];
+            const allInvoices = [
+                ...(invoicesC?.content || []).map((i: any) => ({ ...i, tipo_transacao: 'C' })),
+                ...(invoicesD?.content || []).map((i: any) => ({ ...i, tipo_transacao: 'D' }))
+            ];
             let syncedCount = 0;
 
             for (const inv of allInvoices) {
-                // Feegow costuma usar 'id' ou 'invoice_id'
-                const invId = inv.id || inv.invoice_id;
+                const detalhe = inv.detalhes && inv.detalhes.length > 0 ? inv.detalhes[0] : null;
+
+                // Feegow costuma usar 'id' ou 'invoice_id' ou pode vir dentro de detalhes
+                const invId = inv.id || inv.invoice_id || detalhe?.invoice_id || detalhe?.movement_id;
                 
                 if (!invId) {
-                    console.warn('Fatura ignorada por falta de ID:', inv);
+                    console.warn('Fatura ignorada por falta de ID:', JSON.stringify(inv, null, 2));
                     continue;
                 }
+
+                const invData = detalhe?.data || inv.data;
+                const invValor = detalhe?.valor ?? inv.valor ?? 0;
+                const invDescricao = detalhe?.descricao || inv.descricao || 'Sincronização Feegow (Fatura)';
+                const invTipoConta = detalhe?.tipo_conta || inv.tipo_conta;
+                const invTipoTransacao = inv.tipo_transacao === 'C' ? 'INCOME' : 'EXPENSE';
 
                 const payments = inv.pagamentos || [];
                 
                 if (payments.length > 0) {
                     for (const pay of payments) {
-                        const payId = pay.id || pay.payment_id || pay.movimento_id;
+                        const payId = pay.id || pay.payment_id || pay.movimento_id || pay.pagamento_id;
                         
                         if (!payId) {
                             console.warn('Pagamento ignorado por falta de ID na fatura:', invId);
@@ -149,10 +160,10 @@ export class FeegowSyncService {
                         });
 
                         const transactionData = {
-                            amount: Number(pay.valor),
-                            date: new Date(pay.data),
-                            description: pay.descricao || inv.detalhes?.descricao || 'Sincronização Feegow',
-                            category: categoryMap[pay.tipo_conta] || 'Geral',
+                            amount: Number(pay.valor ?? invValor),
+                            date: pay.data ? new Date(pay.data) : (invData ? new Date(invData) : new Date()),
+                            description: pay.descricao || invDescricao,
+                            category: categoryMap[pay.tipo_conta || invTipoConta] || 'Geral',
                             status: 'PAID' as any
                         };
 
@@ -165,7 +176,7 @@ export class FeegowSyncService {
                             await prisma.transaction.create({
                                 data: {
                                     ...transactionData,
-                                    type: inv.tipo_transacao === 'C' ? 'INCOME' : 'EXPENSE',
+                                    type: invTipoTransacao,
                                     externalId,
                                     externalSource: 'FEEGOW',
                                     clinicId
@@ -181,10 +192,10 @@ export class FeegowSyncService {
                     });
 
                     const transactionData = {
-                        amount: Number(inv.valor),
-                        date: new Date(inv.data),
-                        description: inv.detalhes?.descricao || 'Sincronização Feegow (Fatura)',
-                        category: categoryMap[inv.detalhes?.tipo_conta] || 'Geral',
+                        amount: Number(invValor),
+                        date: invData ? new Date(invData) : new Date(),
+                        description: invDescricao,
+                        category: categoryMap[invTipoConta] || 'Geral',
                         status: 'PENDING' as any
                     };
 
@@ -197,7 +208,7 @@ export class FeegowSyncService {
                         await prisma.transaction.create({
                             data: {
                                 ...transactionData,
-                                type: inv.tipo_transacao === 'C' ? 'INCOME' : 'EXPENSE',
+                                type: invTipoTransacao,
                                 externalId,
                                 externalSource: 'FEEGOW',
                                 clinicId
