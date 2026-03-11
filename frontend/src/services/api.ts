@@ -69,6 +69,11 @@ export const financialApi = {
     createTransaction: (data: any) => api.post('financial/transactions', data),
 };
 
+export const payablesApi = {
+    getPayables: () => api.get('contas-a-pagar'),
+    createPayable: (data: any) => api.post('contas-a-pagar', data),
+};
+
 export const coreApi = {
     getPatients: () => api.get('core/patients'),
     getDoctors: () => api.get('core/doctors'),

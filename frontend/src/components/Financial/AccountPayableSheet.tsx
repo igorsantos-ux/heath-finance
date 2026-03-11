@@ -1,0 +1,378 @@
+import { useState } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { X, Calendar, Plus, Save, DollarSign, FileText, Loader2, ListOrdered, CalendarDays, RefreshCw } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+
+const accountPayableSchema = z.object({
+  description: z.string().min(3, 'A descrição deve ter pelo menos 3 caracteres'),
+  documentNumber: z.string().optional(),
+  totalAmount: z.number().min(0.01, 'O valor deve ser maior que zero'),
+  paymentMethod: z.string().min(1, 'Selecione a forma de pagamento'),
+  date: z.string().optional(), // Data para à vista
+  isInstallment: z.boolean(),
+  installmentsCount: z.number().min(1, 'Mínimo de 1 parcela').optional(),
+  installmentInterval: z.string().optional(),
+  installments: z.array(z.object({
+    installmentNumber: z.number(),
+    amount: z.number(),
+    dueDate: z.string(),
+  })).optional()
+});
+
+type AccountPayableFormData = z.infer<typeof accountPayableSchema>;
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (data: any) => Promise<void>;
+}
+
+export function AccountPayableSheet({ isOpen, onClose, onSave }: Props) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { register, handleSubmit, watch, formState: { errors }, control, reset } = useForm<AccountPayableFormData>({
+    resolver: zodResolver(accountPayableSchema),
+    defaultValues: {
+      description: '',
+      documentNumber: '',
+      totalAmount: 0,
+      paymentMethod: '',
+      date: new Date().toISOString().split('T')[0],
+      isInstallment: false,
+      installmentsCount: 3,
+      installmentInterval: 'MONTHLY',
+      installments: []
+    }
+  });
+
+  const { fields, replace } = useFieldArray({
+    control,
+    name: "installments"
+  });
+
+  const watchIsInstallment = watch('isInstallment');
+  const watchTotalAmount = watch('totalAmount');
+  const watchInstallmentsCount = watch('installmentsCount') || 1;
+  const watchInterval = watch('installmentInterval');
+
+  // Função para gerar as parcelas automaticamente
+  const handleGenerateInstallments = () => {
+    if (!watchTotalAmount || watchTotalAmount <= 0) return;
+    if (!watchInstallmentsCount || watchInstallmentsCount < 1) return;
+
+    const amountPerInstallment = Number((watchTotalAmount / watchInstallmentsCount).toFixed(2));
+    let remainder = Number((watchTotalAmount - (amountPerInstallment * watchInstallmentsCount)).toFixed(2));
+
+    const newInstallments = [];
+    let currentDate = new Date();
+
+    for (let i = 1; i <= watchInstallmentsCount; i++) {
+      let dueDate = new Date(currentDate);
+      
+      if (watchInterval === 'MONTHLY') {
+        dueDate.setMonth(dueDate.getMonth() + i);
+      } else if (watchInterval === 'BIWEEKLY') {
+        dueDate.setDate(dueDate.getDate() + (15 * i));
+      } else if (watchInterval === 'WEEKLY') {
+        dueDate.setDate(dueDate.getDate() + (7 * i));
+      }
+
+      // Adiciona o remainder (centavos) na última parcela
+      let finalAmount = amountPerInstallment;
+      if (i === watchInstallmentsCount && remainder !== 0) {
+        finalAmount = Number((amountPerInstallment + remainder).toFixed(2));
+      }
+
+      newInstallments.push({
+        installmentNumber: i,
+        amount: finalAmount,
+        dueDate: dueDate.toISOString().split('T')[0],
+      });
+    }
+
+    replace(newInstallments);
+  };
+
+  const onSubmit = async (data: AccountPayableFormData) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Formata os dados para o Backend
+      const payload: any = {
+        description: data.description,
+        documentNumber: data.documentNumber,
+        totalAmount: data.totalAmount,
+        paymentMethod: data.paymentMethod,
+        isInstallment: data.isInstallment,
+      };
+
+      if (data.isInstallment) {
+        payload.installmentsCount = data.installmentsCount;
+        payload.installmentInterval = data.installmentInterval;
+        payload.installments = data.installments;
+        // valida se gerou parcelas
+        if (!payload.installments || payload.installments.length === 0) {
+          alert("Por favor, gere as parcelas antes de salvar.");
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        payload.installmentsCount = 1;
+        payload.installments = [{
+          installmentNumber: 1,
+          amount: data.totalAmount,
+          dueDate: data.date,
+          status: 'PENDING'
+        }];
+      }
+
+      await onSave(payload);
+      reset();
+      onClose();
+    } catch (error) {
+      console.error("Erro ao salvar conta:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Overlay Escuro */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50"
+          />
+
+          {/* Sheet / Drawer Lateral da Direita */}
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed top-0 right-0 h-full w-full max-w-md bg-[#FDFBF7] shadow-2xl shadow-slate-900/20 z-50 flex flex-col border-l border-[#8A9A5B]/20"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 bg-[#8A9A5B] text-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md">
+                  <Plus size={20} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black">Nova Conta</h2>
+                  <p className="text-white/80 text-xs font-medium">Cadastro de Despesa a Pagar</p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content Form */}
+            <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200">
+              <form id="accountPayableForm" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                
+                {/* Descrição */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#697D58] uppercase tracking-wider flex items-center gap-2">
+                    <FileText size={14} /> Descrição da Conta
+                  </label>
+                  <input
+                    {...register('description')}
+                    placeholder="Ex: Conta de Luz, Internet, Fornecedor X"
+                    className="w-full bg-white border border-[#8A9A5B]/20 rounded-xl px-4 py-3 text-slate-700 font-medium focus:ring-2 focus:ring-[#8A9A5B]/50 focus:border-[#8A9A5B] transition-all"
+                  />
+                  {errors.description && <span className="text-red-500 text-xs font-bold">{errors.description.message}</span>}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Numero NF/Doc */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#697D58] uppercase tracking-wider">
+                      Nº Documento / NF
+                    </label>
+                    <input
+                      {...register('documentNumber')}
+                      placeholder="Opcional"
+                      className="w-full bg-white border border-[#8A9A5B]/20 rounded-xl px-4 py-3 text-slate-700 font-medium focus:ring-2 focus:ring-[#8A9A5B]/50 transition-all"
+                    />
+                  </div>
+
+                  {/* Valor Total */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#697D58] uppercase tracking-wider flex items-center gap-2">
+                      <DollarSign size={14} /> Valor Total
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-[14px] text-slate-400 font-bold">R$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        {...register('totalAmount', { valueAsNumber: true })}
+                        placeholder="0.00"
+                        className="w-full bg-white border border-[#8A9A5B]/20 rounded-xl pl-12 pr-4 py-3 text-slate-700 font-bold focus:ring-2 focus:ring-[#8A9A5B]/50 transition-all"
+                      />
+                    </div>
+                    {errors.totalAmount && <span className="text-red-500 text-xs font-bold">{errors.totalAmount.message}</span>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Forma de Pagamento */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#697D58] uppercase tracking-wider">Forma de Pagto</label>
+                    <select
+                      {...register('paymentMethod')}
+                      className="w-full bg-white border border-[#8A9A5B]/20 rounded-xl px-4 py-3 text-slate-700 font-medium focus:ring-2 focus:ring-[#8A9A5B]/50 transition-all"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="Boleto">Boleto</option>
+                      <option value="Pix">Pix</option>
+                      <option value="Transferência">Transferência Bancária</option>
+                      <option value="Cartão de Crédito">Cartão de Crédito</option>
+                    </select>
+                    {errors.paymentMethod && <span className="text-red-500 text-xs font-bold">{errors.paymentMethod.message}</span>}
+                  </div>
+
+                  {/* Data Vencimento (À Vista) */}
+                  {!watchIsInstallment && (
+                     <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+                       <label className="text-xs font-bold text-[#697D58] uppercase tracking-wider flex items-center gap-2">
+                         <Calendar size={14} /> Data Vencimento
+                       </label>
+                       <input
+                         type="date"
+                         {...register('date')}
+                         className="w-full bg-white border border-[#8A9A5B]/20 rounded-xl px-4 py-3 text-slate-700 font-medium focus:ring-2 focus:ring-[#8A9A5B]/50 transition-all"
+                       />
+                     </div>
+                  )}
+                </div>
+
+                {/* Switch Parcelamento */}
+                <div className="bg-[#8A9A5B]/5 p-4 rounded-2xl border border-[#8A9A5B]/20 flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-black text-[#697D58] flex items-center gap-2"><ListOrdered size={16}/> Esta conta é parcelada?</h4>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">Ativar divisão automática de valores</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" {...register('isInstallment')} />
+                    <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#8A9A5B]"></div>
+                  </label>
+                </div>
+
+                {/* Lógica Dinâmica de Parcelas */}
+                {watchIsInstallment && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }} 
+                    animate={{ opacity: 1, height: 'auto' }} 
+                    className="space-y-6 pt-2 border-t border-[#8A9A5B]/10"
+                  >
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-[#697D58] uppercase tracking-wider">Quantidade</label>
+                        <input
+                          type="number"
+                          {...register('installmentsCount', { valueAsNumber: true })}
+                          className="w-full bg-white border border-[#8A9A5B]/20 rounded-xl px-4 py-3 text-slate-700 font-medium focus:ring-2 focus:ring-[#8A9A5B]/50 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-[#697D58] uppercase tracking-wider">Intervalo</label>
+                        <select
+                          {...register('installmentInterval')}
+                          className="w-full bg-white border border-[#8A9A5B]/20 rounded-xl px-4 py-3 text-slate-700 font-medium focus:ring-2 focus:ring-[#8A9A5B]/50 transition-all"
+                        >
+                          <option value="MONTHLY">Mensal</option>
+                          <option value="BIWEEKLY">Quinzenal</option>
+                          <option value="WEEKLY">Semanal</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleGenerateInstallments}
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-white border-2 border-dashed border-[#8A9A5B]/40 rounded-xl text-[#8A9A5B] font-bold text-sm hover:bg-[#8A9A5B]/5 hover:border-[#8A9A5B] transition-all"
+                    >
+                      <RefreshCw size={16} /> Gerar Previsão de Parcelas
+                    </button>
+
+                    {fields.length > 0 && (
+                      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                        <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 flex items-center justify-between">
+                          <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Pré-visualização</span>
+                          <span className="text-xs font-bold text-[#8A9A5B]">{fields.length} parcelas</span>
+                        </div>
+                        <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+                          {fields.map((field, index) => (
+                            <div key={field.id} className="p-3 flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-black text-slate-500">
+                                {index + 1}
+                              </div>
+                              <div className="flex-1 grid grid-cols-2 gap-2">
+                                <div className="relative">
+                                  <span className="absolute left-2 top-[10px] text-slate-400 font-bold text-xs">R$</span>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    {...register(`installments.${index}.amount` as const, { valueAsNumber: true })}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-2 py-2 text-slate-700 font-bold text-sm focus:bg-white focus:ring-2 focus:ring-[#8A9A5B]/30 outline-none"
+                                  />
+                                </div>
+                                <div className="relative">
+                                  <CalendarDays className="absolute left-2 top-[10px] text-slate-400" size={14} />
+                                  <input
+                                    type="date"
+                                    {...register(`installments.${index}.dueDate` as const)}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-2 py-2 text-slate-700 font-bold text-sm space-x-2 focus:bg-white focus:ring-2 focus:ring-[#8A9A5B]/30 outline-none"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </form>
+            </div>
+
+            {/* Footer / Ações */}
+            <div className="p-6 border-t border-[#8A9A5B]/10 bg-white">
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 py-3 px-4 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  form="accountPayableForm"
+                  disabled={isSubmitting}
+                  className="flex-[2] flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-white bg-[#8A9A5B] hover:bg-[#697D58] shadow-lg shadow-[#8A9A5B]/30 transition-all disabled:opacity-70"
+                >
+                  {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                  Salvar Conta
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}

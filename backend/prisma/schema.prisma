@@ -53,30 +53,10 @@ model Clinic {
   stockItems            StockItem[]
   goals                 FinancialGoal[]
   documents             Document[]
-  integrations          Integration[]
-  insurances            Insurance[]
-  specialties           Specialty[]
-  procedures            Procedure[]
-  financialCategories   FinancialCategory[]
-  bankAccounts          BankAccount[]
-  appointments          Appointment[]
+  accountPayables       AccountPayable[]
   createdAt             DateTime        @default(now())
 }
 
-model Integration {
-  id          String   @id @default(uuid())
-  type        String   // "FEEGOW", etc.
-  token       String
-  settings    Json?    // Configurações adicionais em JSON
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  clinicId    String
-  clinic      Clinic   @relation(fields: [clinicId], references: [id])
-
-  @@unique([clinicId, type])
-}
 
 model User {
   id        String   @id @default(uuid())
@@ -98,25 +78,11 @@ model Transaction {
   type          String   // "INCOME" or "EXPENSE"
   status        String   @default("PAID") // "PAID", "PENDING", "OVERDUE"
   paymentMethod String?  // "Cartão", "Pix", "Dinheiro", etc.
-  category      String?  // Mantido para fallback
-  
-  categoryId    String?
-  financialCategory FinancialCategory? @relation(fields: [categoryId], references: [id])
-  
-  bankAccountId String?
-  bankAccount   BankAccount? @relation(fields: [bankAccountId], references: [id])
-  
-  appointmentId String?
-  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
-
+  category      String   // "Tecnologias", "Procedimentos", "Produtos", "Fixo", "Variável"
   centerOfCost  String   @default("Operacional")
   procedureName String?
   cost          Float    @default(0)
   date          DateTime @default(now())
-  
-  externalId     String?
-  externalSource String?
-
   doctorId      String?
   doctor        Doctor?  @relation(fields: [doctorId], references: [id])
   
@@ -125,24 +91,17 @@ model Transaction {
   
   clinicId      String
   clinic        Clinic   @relation(fields: [clinicId], references: [id])
-
-  @@unique([externalId, externalSource, clinicId])
 }
 
 model Doctor {
-  id                 String        @id @default(uuid())
-  name               String
-  specialty          String?       // Fallback
-  rqe                String?
-  documento_conselho String?
-  uf_conselho        String?
-  commission         Float
-  transactions       Transaction[]
-  specialties        Specialty[]
-  appointments       Appointment[]
+  id           String        @id @default(uuid())
+  name         String
+  specialty    String
+  commission   Float
+  transactions Transaction[]
   
-  clinicId           String
-  clinic             Clinic        @relation(fields: [clinicId], references: [id])
+  clinicId     String
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
 }
 
 model Customer {
@@ -152,16 +111,11 @@ model Customer {
   phone          String?
   birthDate      DateTime?
   lastVisit      DateTime?
-  externalId     String?       // ID no sistema de origem (ex: Feegow)
-  externalSource String?       // Qual plataforma de origem (ex: "FEEGOW")
   transactions   Transaction[]
-  appointments   Appointment[]
   createdAt      DateTime      @default(now())
   
   clinicId       String
   clinic         Clinic        @relation(fields: [clinicId], references: [id])
-
-  @@unique([externalId, externalSource, clinicId])
 }
 
 model Lead {
@@ -209,135 +163,33 @@ model Document {
   clinic    Clinic @relation(fields: [clinicId], references: [id])
 }
 
-model Insurance {
-  id             String        @id @default(uuid())
-  nome           String
-  registroAns    String?
-  cnpj           String?
-  isActive       Boolean       @default(true)
-  externalId     String?
-  externalSource String?
+model AccountPayable {
+  id                  String                      @id @default(uuid())
+  description         String
+  documentNumber      String?
+  totalAmount         Float
+  paymentMethod       String?
+  isInstallment       Boolean                     @default(false)
+  installmentsCount   Int                         @default(1)
+  installmentInterval String?                     // "MONTHLY", "BIWEEKLY", "WEEKLY", "CUSTOM"
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
   
-  clinicId       String
-  clinic         Clinic        @relation(fields: [clinicId], references: [id])
-  plans          InsurancePlan[]
-  appointments   Appointment[]
-
-  @@unique([externalId, externalSource, clinicId])
-}
-
-model InsurancePlan {
-  id             String        @id @default(uuid())
-  nome           String
-  externalId     String?
-  externalSource String?
-  
-  insuranceId    String
-  insurance      Insurance     @relation(fields: [insuranceId], references: [id])
-  appointments   Appointment[]
-
-  @@unique([externalId, externalSource, insuranceId])
-}
-
-model Specialty {
-  id             String        @id @default(uuid())
-  nome           String
-  codigoTiss     String?
-  externalId     String?
-  externalSource String?
-  
-  clinicId       String
-  clinic         Clinic        @relation(fields: [clinicId], references: [id])
-  doctors        Doctor[]      
-  appointments   Appointment[]
-  procedures     Procedure[]
-
-  @@unique([externalId, externalSource, clinicId])
-}
-
-model Procedure {
-  id               String        @id @default(uuid())
-  nome             String
-  codigo           String?
-  valorPadrao      Float         @default(0)
-  tempoMinutos     Int?
-  tipoProcedimento String?
-  externalId       String?
-  externalSource   String?
-  
-  clinicId         String
-  clinic           Clinic        @relation(fields: [clinicId], references: [id])
-  specialties      Specialty[]
-  appointments     Appointment[]
-
-  @@unique([externalId, externalSource, clinicId])
-}
-
-model FinancialCategory {
-  id             String        @id @default(uuid())
-  nome           String
-  tipo           String        // "INCOME" or "EXPENSE"
-  parentId       String?       
-  externalId     String?
-  externalSource String?
-  
-  clinicId       String
-  clinic         Clinic        @relation(fields: [clinicId], references: [id])
-  transactions   Transaction[]
-
-  @@unique([externalId, externalSource, clinicId])
-}
-
-model BankAccount {
-  id             String        @id @default(uuid())
-  nome           String
-  tipoConta      String?
-  banco          String?
-  externalId     String?
-  externalSource String?
-  
-  clinicId       String
-  clinic         Clinic        @relation(fields: [clinicId], references: [id])
-  transactions   Transaction[]
-
-  @@unique([externalId, externalSource, clinicId])
-}
-
-model Appointment {
-  id                  String        @id @default(uuid())
-  date                DateTime
-  time                String?
-  notes               String?
-  agendadoPor         String?
-  telemedicina        Boolean       @default(false)
-  primeiroAgendamento Boolean       @default(false)
-  status              String        @default("SCHEDULED")
-  
-  doctorId            String?
-  doctor              Doctor?       @relation(fields: [doctorId], references: [id])
-  
-  customerId          String?
-  customer            Customer?     @relation(fields: [customerId], references: [id])
-  
-  procedureId         String?
-  procedure           Procedure?    @relation(fields: [procedureId], references: [id])
-  
-  insuranceId         String?
-  insurance           Insurance?    @relation(fields: [insuranceId], references: [id])
-  
-  insurancePlanId     String?
-  insurancePlan       InsurancePlan? @relation(fields: [insurancePlanId], references: [id])
-  
-  specialtyId         String?
-  specialty           Specialty?    @relation(fields: [specialtyId], references: [id])
-
   clinicId            String
-  clinic              Clinic        @relation(fields: [clinicId], references: [id])
+  clinic              Clinic                      @relation(fields: [clinicId], references: [id])
   
-  transactions        Transaction[]
+  installments        AccountPayableInstallment[]
+}
 
-  externalId          String?
-  externalSource      String?
-
-  @@unique([externalId, externalSource, clinicId])
+model AccountPayableInstallment {
+  id                String         @id @default(uuid())
+  accountPayableId  String
+  accountPayable    AccountPayable @relation(fields: [accountPayableId], references: [id], onDelete: Cascade)
+  
+  installmentNumber Int
+  amount            Float
+  dueDate           DateTime
+  status            String         @default("PENDING") // "PENDING", "PAID", "OVERDUE", "CANCELLED"
+  paidAt            DateTime?
+  paymentMethod     String?
 }

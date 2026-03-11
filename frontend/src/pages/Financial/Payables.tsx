@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { financialApi } from '../../services/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { financialApi, payablesApi } from '../../services/api';
+import { AccountPayableSheet } from '../../components/Financial/AccountPayableSheet';
 import {
     ArrowDownCircle,
     Calendar,
@@ -15,6 +16,8 @@ import {
 
 const PayablesPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const queryClient = useQueryClient();
 
     const { data: summary, isLoading: isLoadingSummary } = useQuery({
         queryKey: ['financial-summary'],
@@ -27,6 +30,19 @@ const PayablesPage = () => {
     });
 
     const isLoading = isLoadingSummary || isLoadingTransactions;
+
+    const handleSaveAccount = async (data: any) => {
+        try {
+            await payablesApi.createPayable(data);
+            // Invalida e recarrega as listas do balanço
+            queryClient.invalidateQueries({ queryKey: ['financial-summary'] });
+            queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
+            alert("Conta a pagar salva com sucesso!"); // Pode ser trocado por um toast futuramente
+        } catch (error) {
+            console.error(error);
+            alert("Ocorreu um erro ao salvar a conta.");
+        }
+    };
 
     if (isLoading) {
         return (
@@ -59,7 +75,9 @@ const PayablesPage = () => {
                     <p className="text-slate-500 font-medium mt-1">Gestão de compromissos financeiros e fornecedores.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-6 py-3 bg-[#8A9A5B] text-white rounded-2xl font-bold text-sm shadow-xl shadow-[#8A9A5B]/20 hover:scale-[1.02] active:scale-95 transition-all">
+                    <button 
+                        onClick={() => setIsSheetOpen(true)}
+                        className="flex items-center gap-2 px-6 py-3 bg-[#8A9A5B] text-white rounded-2xl font-bold text-sm shadow-xl shadow-[#8A9A5B]/20 hover:scale-[1.02] active:scale-95 transition-all">
                         <Plus size={20} />
                         Nova Conta
                     </button>
@@ -177,6 +195,13 @@ const PayablesPage = () => {
                     </>
                 )}
             </div>
+            
+            {/* Sheet Lateral */}
+            <AccountPayableSheet 
+                isOpen={isSheetOpen}
+                onClose={() => setIsSheetOpen(false)}
+                onSave={handleSaveAccount}
+            />
         </div>
     );
 };

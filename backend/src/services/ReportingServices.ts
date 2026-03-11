@@ -80,8 +80,7 @@ export class BillingService {
 
         // Por Categoria
         const billingByCategory = transactions.reduce((acc: any, t) => {
-            const cat = t.category || 'Geral';
-            acc[cat] = (acc[cat] || 0) + t.amount;
+            acc[t.category] = (acc[t.category] || 0) + t.amount;
             return acc;
         }, {});
 
