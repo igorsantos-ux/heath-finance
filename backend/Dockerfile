@@ -1,3 +1,4 @@
+# Build Version: 11.3
 FROM node:18-slim
 
 # Instalar dependências necessárias
