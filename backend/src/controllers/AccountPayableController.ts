@@ -36,16 +36,16 @@ export class AccountPayableController {
 
             // Filtros rápidos por status de vencimento
             if (filter === 'overdue') {
-                where.status = 'PENDING';
+                where.status = 'PENDENTE';
                 where.dueDate = { lt: today };
             } else if (filter === 'today') {
-                where.status = 'PENDING';
+                where.status = 'PENDENTE';
                 where.dueDate = {
                     gte: today,
                     lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
                 };
             } else if (filter === 'upcoming') {
-                where.status = 'PENDING';
+                where.status = 'PENDENTE';
                 where.dueDate = { gte: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
             }
 
@@ -78,7 +78,7 @@ export class AccountPayableController {
             const allUnpaid = await prisma.accountPayableInstallment.findMany({
                 where: {
                     accountPayable: { clinicId },
-                    status: 'PENDING'
+                    status: 'PENDENTE'
                 },
                 select: { amount: true, dueDate: true }
             });
@@ -167,31 +167,32 @@ export class AccountPayableController {
                         installmentInterval: installmentInterval || null,
                         supplierName: supplierName || null,
                         supplierCnpj: supplierCnpj || null,
-                        interestValue: Number(interestValue) || 0,
-                        penaltyValue: Number(penaltyValue) || 0,
-                        bank: bank || null,
-                        observation: observation || null,
-                        fileUrl: fileUrl || null,
-                        costCenter: costCenter || null,
-                        costType: costType || null,
-                        clinicId
-                    }
-                });
-
-                const installmentsData = installments.map((inst: any, index: number) => {
-                    return {
-                        accountPayableId: account.id,
-                        installmentNumber: inst.installmentNumber || (index + 1),
-                        amount: Number(inst.amount),
-                        dueDate: new Date(inst.dueDate),
-                        status: inst.status || 'PENDING',
-                        paymentMethod: paymentMethod || null
-                    };
-                });
-
-                await tx.accountPayableInstallment.createMany({
-                    data: installmentsData
-                });
+                         interestValue: Number(interestValue) || 0,
+                         penaltyValue: Number(penaltyValue) || 0,
+                         bank: bank || null,
+                         observation: observation || null,
+                         fileUrl: fileUrl || null,
+                         costCenter: costCenter || null,
+                         costType: costType || null,
+                         status: 'PENDENTE',
+                         clinicId
+                     }
+                 });
+ 
+                 const installmentsData = installments.map((inst: any, index: number) => {
+                     return {
+                         accountPayableId: account.id,
+                         installmentNumber: inst.installmentNumber || (index + 1),
+                         amount: Number(inst.amount),
+                         dueDate: new Date(inst.dueDate),
+                         status: inst.status || 'PENDENTE',
+                         paymentMethod: paymentMethod || null
+                     };
+                 });
+ 
+                 await tx.accountPayableInstallment.createMany({
+                     data: installmentsData
+                 });
 
                 return tx.accountPayable.findUnique({
                     where: { id: account.id },
@@ -204,6 +205,70 @@ export class AccountPayableController {
         } catch (error: any) {
             console.error('Erro ao criar conta a pagar:', error);
             return res.status(500).json({ message: 'Erro ao cadastrar conta a pagar', error: error.message });
+        }
+    }
+
+    // Atualiza o status de uma parcela
+    static async updateStatus(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const { status } = req.body;
+
+            if (!['PENDENTE', 'PAGO', 'ATRASADO', 'CANCELADO'].includes(status)) {
+                return res.status(400).json({ message: 'Status inválido' });
+            }
+
+            const updated = await prisma.accountPayableInstallment.update({
+                where: { id },
+                data: { 
+                    status,
+                    paidAt: status === 'PAGO' ? new Date() : null
+                }
+            });
+
+            return res.json(updated);
+        } catch (error: any) {
+            console.error('Erro ao atualizar status:', error);
+            return res.status(500).json({ message: 'Erro ao atualizar status', error: error.message });
+        }
+    }
+
+    // Exclui uma parcela
+    static async delete(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+
+            // Busca a parcela para ver se é a última da conta pai
+            const installment = await prisma.accountPayableInstallment.findUnique({
+                where: { id },
+                select: { accountPayableId: true }
+            });
+
+            if (!installment) {
+                return res.status(404).json({ message: 'Parcela não encontrada' });
+            }
+
+            // Exclui a parcela
+            await prisma.accountPayableInstallment.delete({
+                where: { id }
+            });
+
+            // Verifica se ainda existem outras parcelas para a mesma conta
+            const remaining = await prisma.accountPayableInstallment.count({
+                where: { accountPayableId: installment.accountPayableId }
+            });
+
+            // Se não houver mais parcelas, exclui a conta pai
+            if (remaining === 0) {
+                await prisma.accountPayable.delete({
+                    where: { id: installment.accountPayableId }
+                });
+            }
+
+            return res.json({ message: 'Parcela excluída com sucesso' });
+        } catch (error: any) {
+            console.error('Erro ao excluir parcela:', error);
+            return res.status(500).json({ message: 'Erro ao excluir parcela', error: error.message });
         }
     }
 }

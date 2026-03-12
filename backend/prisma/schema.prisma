@@ -181,6 +181,7 @@ model AccountPayable {
   installmentInterval String?                     // "MONTHLY", "BIWEEKLY", "WEEKLY", "CUSTOM" ou dias
   costCenter          String?                     // Centro de Custo
   costType            String?                     // Tipo de Custo (Fixo, Variável, etc)
+  status              String                      @default("PENDENTE") // PENDENTE, PAGO, ATRASADO
   createdAt           DateTime                    @default(now())
   updatedAt           DateTime                    @updatedAt
   
@@ -198,7 +199,7 @@ model AccountPayableInstallment {
   installmentNumber Int
   amount            Float
   dueDate           DateTime
-  status            String         @default("PENDING") // "PENDING", "PAID", "OVERDUE", "CANCELLED"
+  status            String         @default("PENDENTE") // PENDENTE, PAGO, ATRASADO, CANCELADO
   paidAt            DateTime?
   paymentMethod     String?
 }

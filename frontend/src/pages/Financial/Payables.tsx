@@ -15,6 +15,30 @@ import {
     FileDown
 } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
+import { useMutation } from '@tanstack/react-query';
+
+const StatusBadge = ({ status, dueDate }: { status: string; dueDate: string }) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const date = new Date(dueDate);
+    date.setHours(0, 0, 0, 0);
+
+    const isOverdue = status === 'PENDENTE' && date < today;
+    const currentStatus = isOverdue ? 'ATRASADO' : status;
+
+    const styles: any = {
+        'PAGO': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+        'PENDENTE': 'bg-amber-100 text-amber-700 border-amber-200',
+        'ATRASADO': 'bg-rose-100 text-rose-700 border-rose-200',
+        'CANCELADO': 'bg-slate-100 text-slate-500 border-slate-200'
+    };
+
+    return (
+        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${styles[currentStatus] || styles['PENDENTE']}`}>
+            {currentStatus}
+        </span>
+    );
+};
 
 const StatCard = ({ title, value, icon, color, alert }: any) => (
     <div className={`bg-white p-6 rounded-3xl border ${alert ? 'border-[#DEB587]/30 shadow-lg shadow-[#DEB587]/5' : 'border-[#8A9A5B]/10 shadow-sm'} flex items-center gap-5 group`}>
@@ -38,6 +62,30 @@ const PayablesPage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [activeFilter, setActiveFilter] = useState<string>('all');
     const itemsPerPage = 20;
+
+    // Mutação para atualizar status
+    const updateStatusMutation = useMutation({
+        mutationFn: ({ id, status }: { id: string; status: string }) => payablesApi.updatePayableStatus(id, status),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['payables-list-v4'] });
+            toast.success('Status atualizado com sucesso!');
+        },
+        onError: (err: any) => {
+            toast.error('Erro ao atualizar status: ' + (err.response?.data?.message || err.message));
+        }
+    });
+
+    // Mutação para excluir
+    const deleteMutation = useMutation({
+        mutationFn: (id: string) => payablesApi.deletePayable(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['payables-list-v4'] });
+            toast.success('Conta excluída com sucesso!');
+        },
+        onError: (err: any) => {
+            toast.error('Erro ao excluir: ' + (err.response?.data?.message || err.message));
+        }
+    });
 
     const { data: payablesResponse, isLoading } = useQuery({
         queryKey: ['payables-list-v4', currentPage, activeFilter, searchTerm],
@@ -192,6 +240,7 @@ const PayablesPage = () => {
                                     <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fornecedor</th>
                                     <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Vencimento</th>
                                     <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Valor</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
                                     <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
                                 </tr>
                             </thead>
@@ -219,20 +268,56 @@ const PayablesPage = () => {
                                         <td className="px-8 py-6 text-xs font-bold text-slate-600">{item.supplierName || '-'}</td>
                                         <td className="px-8 py-6 text-xs font-bold text-slate-600 text-center">{formatDateSafe(item.date)}</td>
                                         <td className="px-8 py-6 text-sm font-black text-slate-800 text-center">R$ {item.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                        <td className="px-8 py-6 text-center">
+                                            <StatusBadge status={item.status} dueDate={item.dueDate} />
+                                        </td>
                                         <td className="px-8 py-6 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                {item.fileUrl && (
+                                                {item.accountPayable?.fileUrl && (
                                                     <a 
-                                                        href={item.fileUrl} 
+                                                        href={item.accountPayable.fileUrl} 
                                                         target="_blank" 
                                                         rel="noreferrer" 
                                                         className="p-2.5 text-[#8A9A5B] hover:bg-[#8A9A5B]/10 rounded-xl transition-all"
-                                                        title="Baixar Boleto/Colo"
+                                                        title="Baixar Boleto"
                                                     >
-                                                        <FileDown size={20} />
+                                                        <FileDown size={18} />
                                                     </a>
                                                 )}
-                                                <button className="p-2.5 text-slate-400 hover:bg-slate-100 rounded-xl transition-all"><MoreVertical size={20} /></button>
+                                                
+                                                <div className="relative group/menu">
+                                                    <button className="p-2.5 text-slate-400 hover:bg-slate-100 rounded-xl transition-all">
+                                                        <MoreVertical size={18} />
+                                                    </button>
+                                                    
+                                                    {/* Custom DropdownMenu */}
+                                                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 invisible group-hover/menu:visible opacity-0 group-hover/menu:opacity-100 transition-all">
+                                                        {item.status !== 'PAGO' && (
+                                                            <button 
+                                                                onClick={() => updateStatusMutation.mutate({ id: item.id, status: 'PAGO' })}
+                                                                className="w-full text-left px-5 py-2.5 text-xs font-bold text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                                            >
+                                                                Marcar como Pago
+                                                            </button>
+                                                        )}
+                                                        <button 
+                                                            onClick={() => {
+                                                                if (window.confirm('Tem certeza que deseja excluir esta parcela?')) {
+                                                                    deleteMutation.mutate(item.id);
+                                                                }
+                                                            }}
+                                                            className="w-full text-left px-5 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
+                                                        >
+                                                            Excluir
+                                                        </button>
+                                                        <button 
+                                                            disabled
+                                                            className="w-full text-left px-5 py-2.5 text-xs font-bold text-slate-300 cursor-not-allowed"
+                                                        >
+                                                            Editar (Breve)
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>

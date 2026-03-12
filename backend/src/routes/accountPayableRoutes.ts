@@ -13,4 +13,10 @@ router.get('/', AccountPayableController.list);
 // Rota para cadastrar uma nova conta a pagar (à vista ou com parcelas múltiplas)
 router.post('/', AccountPayableController.create);
 
+// Rota para atualizar o status de uma parcela
+router.patch('/:id/status', AccountPayableController.updateStatus);
+
+// Rota para excluir uma parcela
+router.delete('/:id', AccountPayableController.delete);
+
 export default router;
