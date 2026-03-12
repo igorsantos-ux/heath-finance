@@ -18,8 +18,7 @@ import {
     Medal,
     ChevronRight,
     Cake,
-    Mail,
-    DollarSign
+    Mail
 } from 'lucide-react';
 
 const getClassificationConfig = (classification: string) => {

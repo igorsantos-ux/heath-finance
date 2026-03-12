@@ -10,11 +10,7 @@ import {
     Phone, 
     MapPin, 
     HeartPulse, 
-    Stethoscope, 
     Camera,
-    Trash2,
-    Briefcase,
-    Calendar,
     CreditCard
 } from 'lucide-react';
 import { coreApi } from '../../services/api';
@@ -40,7 +36,7 @@ const patientSchema = z.object({
   height: z.string().optional(),
   disability: z.string().optional(),
   allergies: z.string().optional(),
-  smoker: z.boolean().default(false),
+  smoker: z.boolean().optional(),
   priority: z.string().optional(),
   insurance: z.string().optional(),
   insurancePlan: z.string().optional(),
@@ -61,7 +57,7 @@ export function PatientSheet({ isOpen, onClose, onSave, patient }: Props) {
   const [activeTab, setActiveTab] = useState<'pessoais' | 'contato' | 'clinico'>('pessoais');
   const [photoPreview, setPhotoPreview] = useState<string | null>(patient?.photoUrl || null);
 
-  const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<PatientFormData>({
+  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
     defaultValues: patient ? {
         ...patient,
@@ -78,7 +74,7 @@ export function PatientSheet({ isOpen, onClose, onSave, patient }: Props) {
     }
   });
 
-  const onSubmit = async (data: PatientFormData) => {
+  const onSubmit = async (data: any) => {
     try {
       setIsSubmitting(true);
       if (patient?.id) {
