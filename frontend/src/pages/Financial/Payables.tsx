@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { payablesApi } from '../../services/api';
+import { AccountPayableSheet } from '../../components/Financial/AccountPayableSheet';
 import {
     ArrowDownCircle,
     Calendar,
@@ -13,6 +14,7 @@ import {
     FileText,
     MoreVertical
 } from 'lucide-react';
+import { toast, Toaster } from 'react-hot-toast';
 
 const StatCard = ({ title, value, icon, color, alert }: any) => (
     <div className={`bg-white p-6 rounded-3xl border ${alert ? 'border-[#DEB587]/30 shadow-lg shadow-[#DEB587]/5' : 'border-[#8A9A5B]/10 shadow-sm'} flex items-center gap-5 group`}>
@@ -28,11 +30,12 @@ const StatCard = ({ title, value, icon, color, alert }: any) => (
 );
 
 const PayablesPage = () => {
+    const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
-    const [_isSheetOpen, _setIsSheetOpen] = useState(false);
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
 
     const { data: payablesResponse, isLoading } = useQuery({
-        queryKey: ['payables-list-v2'],
+        queryKey: ['payables-list-v3'],
         queryFn: async () => {
             const res = await payablesApi.getPayables();
             return res.data;
@@ -92,6 +95,16 @@ const PayablesPage = () => {
         }
     }, [payablesResponse, searchTerm]);
 
+    const handleSaveAccount = async (data: any) => {
+        try {
+            await payablesApi.createPayable(data);
+            toast.success('Conta salva com sucesso!');
+            queryClient.invalidateQueries({ queryKey: ['payables-list-v3'] });
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || 'Erro ao salvar conta');
+        }
+    };
+
     const formatDateSafe = (dateStr: any) => {
         try {
             const d = new Date(dateStr);
@@ -106,21 +119,23 @@ const PayablesPage = () => {
         return (
             <div className="h-[60vh] w-full flex flex-col items-center justify-center gap-4 py-20 text-[#8A9A5B]">
                 <Loader2 className="animate-spin" size={48} />
-                <p className="font-black uppercase tracking-widest text-xs">Carregando dados financeiros...</p>
+                <p className="font-black uppercase tracking-widest text-xs tracking-tighter">Carregando dados financeiros...</p>
             </div>
         );
     }
 
     return (
         <div className="space-y-10 pb-12 animate-in fade-in duration-500">
+            <Toaster position="top-right" />
+            
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-[#697D58]">Contas a Pagar</h2>
-                    <p className="text-slate-500 font-medium mt-1">Gestão de compromissos e fornecedores.</p>
+                    <p className="text-slate-500 font-medium mt-1">Gestão de fornecedores e compromissos financeiros.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button 
-                        onClick={() => _setIsSheetOpen(true)}
+                        onClick={() => setIsSheetOpen(true)}
                         className="flex items-center gap-2 px-6 py-3 bg-[#8A9A5B] text-white rounded-2xl font-bold text-sm shadow-xl shadow-[#8A9A5B]/20 hover:scale-[1.02] active:scale-95 transition-all">
                         <Plus size={20} />
                         Nova Conta
@@ -199,6 +214,12 @@ const PayablesPage = () => {
                     </div>
                 )}
             </div>
+
+            <AccountPayableSheet 
+                isOpen={isSheetOpen}
+                onClose={() => setIsSheetOpen(false)}
+                onSave={handleSaveAccount}
+            />
         </div>
     );
 };
