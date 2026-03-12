@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
     Target,
@@ -22,6 +23,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [isSyncing, setIsSyncing] = useState(false);
     
@@ -162,6 +164,7 @@ const Dashboard = () => {
                     change="+0%"
                     trend="up"
                     icon={<DollarSign size={20} />}
+                    onClick={() => navigate('/pendenciais')}
                 />
                 <KPICard
                     title="Recebimentos Líquidos"
@@ -169,6 +172,7 @@ const Dashboard = () => {
                     change="+0%"
                     trend="up"
                     icon={<Wallet size={20} />}
+                    onClick={() => navigate('/pendenciais')}
                 />
                 <KPICard
                     title="Contas a Pagar"
@@ -176,6 +180,7 @@ const Dashboard = () => {
                     change="0%"
                     trend="down"
                     icon={<TrendingDown size={20} />}
+                    onClick={() => navigate('/contas-a-pagar')}
                 />
                 <KPICard
                     title="Contas a Receber"
@@ -183,6 +188,7 @@ const Dashboard = () => {
                     change="+0%"
                     trend="up"
                     icon={<TrendingUp size={20} />}
+                    onClick={() => navigate('/pendenciais')}
                 />
             </div>
 
@@ -205,6 +211,7 @@ const Dashboard = () => {
                     value={`R$ ${(dashboard?.cards?.despesasTotais ?? 0).toLocaleString('pt-BR')}`}
                     description="Fixas e Variáveis consolidadas"
                     icon={<TrendingDown size={18} />}
+                    onClick={() => navigate('/contas-a-pagar')}
                 />
             </div>
 
@@ -532,8 +539,11 @@ const Dashboard = () => {
     );
 };
 
-const KPICard = ({ title, value, change, trend, icon }: any) => (
-    <div className="bg-white p-8 rounded-[2rem] border border-[#8A9A5B]/10 shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 group cursor-pointer overflow-hidden relative">
+const KPICard = ({ title, value, change, trend, icon, onClick }: any) => (
+    <div 
+        onClick={onClick}
+        className="bg-white p-8 rounded-[2rem] border border-[#8A9A5B]/10 shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 group cursor-pointer overflow-hidden relative"
+    >
         <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
             {icon}
         </div>
@@ -548,8 +558,11 @@ const KPICard = ({ title, value, change, trend, icon }: any) => (
     </div>
 );
 
-const MetricCard = ({ title, value, description, icon }: any) => (
-    <div className="bg-white/40 backdrop-blur-sm p-6 rounded-3xl border border-[#8A9A5B]/5 flex items-center gap-5 hover:bg-white transition-all cursor-default group">
+const MetricCard = ({ title, value, description, icon, onClick }: any) => (
+    <div 
+        onClick={onClick}
+        className={`bg-white/40 backdrop-blur-sm p-6 rounded-3xl border border-[#8A9A5B]/5 flex items-center gap-5 hover:bg-white transition-all group ${onClick ? 'cursor-pointer' : 'cursor-default'}`}
+    >
         <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-[#8A9A5B]/10 flex items-center justify-center text-[#8A9A5B] group-hover:scale-110 transition-transform">
             {icon}
         </div>

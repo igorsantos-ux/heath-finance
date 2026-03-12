@@ -54,7 +54,14 @@ export class ReportingController {
 
     static async getDashboardData(req: any, res: Response) {
         try {
-            const clinicId = req.clinicId;
+            let clinicId = req.clinicId || (req as any).user?.clinicId;
+
+            // Suporte para ADMIN_GLOBAL ver dados de uma clínica teste se não estiver vinculado
+            if (!clinicId && (req as any).user?.role === 'ADMIN_GLOBAL') {
+                const firstClinic = await prisma.clinic.findFirst();
+                clinicId = firstClinic?.id;
+            }
+
             if (!clinicId) return res.status(401).json({ message: 'Clínica não identificada' });
 
             const today = new Date();
