@@ -12,7 +12,6 @@ import {
     Search,
     CheckCircle2,
     MoreVertical,
-    FileDown,
     Paperclip
 } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
