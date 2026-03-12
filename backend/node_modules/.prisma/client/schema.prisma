@@ -167,7 +167,11 @@ model AccountPayable {
   id                  String                      @id @default(uuid())
   description         String
   documentNumber      String?
+  supplierName        String?                     // Nome do Fornecedor / Credor
+  supplierCnpj        String?                     // CNPJ do Fornecedor
   totalAmount         Float
+  interestValue       Float                       @default(0) // Juros
+  penaltyValue        Float                       @default(0) // Multa
   paymentMethod       String?
   isInstallment       Boolean                     @default(false)
   installmentsCount   Int                         @default(1)

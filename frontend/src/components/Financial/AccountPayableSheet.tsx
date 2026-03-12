@@ -8,7 +8,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 const accountPayableSchema = z.object({
   description: z.string().min(3, 'A descrição deve ter pelo menos 3 caracteres'),
   documentNumber: z.string().optional(),
+  supplierName: z.string().optional(),
+  supplierCnpj: z.string().optional(),
   totalAmount: z.number().min(0.01, 'O valor deve ser maior que zero'),
+  interestValue: z.number().optional(),
+  penaltyValue: z.number().optional(),
   paymentMethod: z.string().min(1, 'Selecione a forma de pagamento'),
   date: z.string().optional(), // Data para à vista
   isInstallment: z.boolean(),
@@ -37,7 +41,11 @@ export function AccountPayableSheet({ isOpen, onClose, onSave }: Props) {
     defaultValues: {
       description: '',
       documentNumber: '',
+      supplierName: '',
+      supplierCnpj: '',
       totalAmount: 0,
+      interestValue: 0,
+      penaltyValue: 0,
       paymentMethod: '',
       date: new Date().toISOString().split('T')[0],
       isInstallment: false,
@@ -53,17 +61,22 @@ export function AccountPayableSheet({ isOpen, onClose, onSave }: Props) {
   });
 
   const watchIsInstallment = watch('isInstallment');
-  const watchTotalAmount = watch('totalAmount');
+  const watchTotalAmount = watch('totalAmount') || 0;
+  const watchInterest = watch('interestValue') || 0;
+  const watchPenalty = watch('penaltyValue') || 0;
   const watchInstallmentsCount = watch('installmentsCount') || 1;
   const watchInterval = watch('installmentInterval');
 
+  // Lógica de Soma Dinâmica para o Total a Pagar
+  const calculatedGrandTotal = Number((watchTotalAmount + watchInterest + watchPenalty).toFixed(2));
+
   // Função para gerar as parcelas automaticamente
   const handleGenerateInstallments = () => {
-    if (!watchTotalAmount || watchTotalAmount <= 0) return;
+    if (calculatedGrandTotal <= 0) return;
     if (!watchInstallmentsCount || watchInstallmentsCount < 1) return;
 
-    const amountPerInstallment = Number((watchTotalAmount / watchInstallmentsCount).toFixed(2));
-    let remainder = Number((watchTotalAmount - (amountPerInstallment * watchInstallmentsCount)).toFixed(2));
+    const amountPerInstallment = Number((calculatedGrandTotal / watchInstallmentsCount).toFixed(2));
+    let remainder = Number((calculatedGrandTotal - (amountPerInstallment * watchInstallmentsCount)).toFixed(2));
 
     const newInstallments = [];
     let currentDate = new Date();
@@ -100,10 +113,15 @@ export function AccountPayableSheet({ isOpen, onClose, onSave }: Props) {
       setIsSubmitting(true);
       
       // Formata os dados para o Backend
+      // Envia o GrantTotal (Original + Taxas) como o Total efetivo da dívida para o Controller
       const payload: any = {
         description: data.description,
         documentNumber: data.documentNumber,
-        totalAmount: data.totalAmount,
+        supplierName: data.supplierName,
+        supplierCnpj: data.supplierCnpj,
+        totalAmount: calculatedGrandTotal,
+        interestValue: data.interestValue || 0,
+        penaltyValue: data.penaltyValue || 0,
         paymentMethod: data.paymentMethod,
         isInstallment: data.isInstallment,
       };
@@ -122,7 +140,7 @@ export function AccountPayableSheet({ isOpen, onClose, onSave }: Props) {
         payload.installmentsCount = 1;
         payload.installments = [{
           installmentNumber: 1,
-          amount: data.totalAmount,
+          amount: calculatedGrandTotal,
           dueDate: data.date,
           status: 'PENDING'
         }];
@@ -207,28 +225,31 @@ export function AccountPayableSheet({ isOpen, onClose, onSave }: Props) {
                       className="w-full bg-white border border-[#8A9A5B]/20 rounded-xl px-4 py-3 text-slate-700 font-medium focus:ring-2 focus:ring-[#8A9A5B]/50 transition-all"
                     />
                   </div>
-
-                  {/* Valor Total */}
+                  
+                  {/* Fornecedor */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-[#697D58] uppercase tracking-wider flex items-center gap-2">
-                      <DollarSign size={14} /> Valor Total
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-[14px] text-slate-400 font-bold">R$</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        {...register('totalAmount', { valueAsNumber: true })}
-                        placeholder="0.00"
-                        className="w-full bg-white border border-[#8A9A5B]/20 rounded-xl pl-12 pr-4 py-3 text-slate-700 font-bold focus:ring-2 focus:ring-[#8A9A5B]/50 transition-all"
-                      />
-                    </div>
-                    {errors.totalAmount && <span className="text-red-500 text-xs font-bold">{errors.totalAmount.message}</span>}
+                    <label className="text-xs font-bold text-[#697D58] uppercase tracking-wider">Fornecedor / Credor</label>
+                    <input
+                      {...register('supplierName')}
+                      placeholder="Identificação do recebedor"
+                      className="w-full bg-white border border-[#8A9A5B]/20 rounded-xl px-4 py-3 text-slate-700 font-medium focus:ring-2 focus:ring-[#8A9A5B]/50 transition-all"
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Forma de Pagamento */}
+                  {/* CNPJ */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#697D58] uppercase tracking-wider">
+                      CNPJ Fornecedor
+                    </label>
+                    <input
+                      {...register('supplierCnpj')}
+                      placeholder="00.000.000/0000-00"
+                      className="w-full bg-white border border-[#8A9A5B]/20 rounded-xl px-4 py-3 text-slate-700 font-medium focus:ring-2 focus:ring-[#8A9A5B]/50 transition-all"
+                    />
+                  </div>
+
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-[#697D58] uppercase tracking-wider">Forma de Pagto</label>
                     <select
@@ -243,6 +264,72 @@ export function AccountPayableSheet({ isOpen, onClose, onSave }: Props) {
                     </select>
                     {errors.paymentMethod && <span className="text-red-500 text-xs font-bold">{errors.paymentMethod.message}</span>}
                   </div>
+                </div>
+
+                {/* Bloco de Valores (Original, Juros, Multas, Total) */}
+                <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200/60 space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    {/* Valor Original */}
+                    <div className="space-y-1.5 col-span-1">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <DollarSign size={12} /> Valor Original
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-[10px] text-slate-400 font-bold text-xs">R$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          {...register('totalAmount', { valueAsNumber: true })}
+                          placeholder="0.00"
+                          className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-slate-700 font-bold text-sm focus:ring-2 focus:ring-[#8A9A5B]/40 transition-all"
+                        />
+                      </div>
+                      {errors.totalAmount && <span className="text-red-500 text-[10px] font-bold">{errors.totalAmount.message}</span>}
+                    </div>
+
+                    {/* Juros */}
+                    <div className="space-y-1.5 col-span-1">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        Juros
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-[10px] text-slate-400 font-bold text-xs">R$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          {...register('interestValue', { valueAsNumber: true })}
+                          placeholder="0.00"
+                          className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-slate-700 font-bold text-sm focus:ring-2 focus:ring-[#8A9A5B]/40 transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Multa */}
+                    <div className="space-y-1.5 col-span-1">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        Multa
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-[10px] text-slate-400 font-bold text-xs">R$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          {...register('penaltyValue', { valueAsNumber: true })}
+                          placeholder="0.00"
+                          className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-slate-700 font-bold text-sm focus:ring-2 focus:ring-[#8A9A5B]/40 transition-all"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Valor Total Destacado */}
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-200/60 mt-2">
+                    <span className="text-sm font-black text-[#697D58] uppercase tracking-widest">Total a Pagar</span>
+                    <span className="text-2xl font-black text-[#8A9A5B]">R$ {calculatedGrandTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
 
                   {/* Data Vencimento (À Vista) */}
                   {!watchIsInstallment && (
