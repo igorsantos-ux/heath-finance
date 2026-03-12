@@ -12,6 +12,7 @@ import reportingRoutes from './routes/reportingRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import historyRoutes from './routes/historyRoutes.js';
 import accountPayableRoutes from './routes/accountPayableRoutes.js';
+import receivableRoutes from './routes/receivableRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 
 import importRoutes from './routes/importRoutes.js';
@@ -53,6 +54,7 @@ app.use('/api/reporting', reportingRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/contas-a-pagar', accountPayableRoutes);
+app.use('/api/pendenciais', receivableRoutes);
 app.use('/api/upload', uploadRoutes);
 
 app.use('/api/import', importRoutes);

@@ -81,6 +81,14 @@ export const payablesApi = {
     }),
 };
 
+export const receivablesApi = {
+    getReceivables: (params?: { page?: number; limit?: number; filter?: string; search?: string }) => 
+        api.get('pendenciais', { params }),
+    createReceivable: (data: any) => api.post('pendenciais', data),
+    updateReceivableStatus: (id: string, status: string) => api.patch(`pendenciais/${id}/status`, { status }),
+    deleteReceivable: (id: string) => api.delete(`pendenciais/${id}`),
+};
+
 export const coreApi = {
     getPatients: () => api.get('core/patients'),
     getDoctors: () => api.get('core/doctors'),
@@ -90,6 +98,7 @@ export const coreApi = {
 };
 
 export const reportingApi = {
+    getDashboard: () => api.get('reporting/dashboard'),
     getDashboardKPIs: () => api.get('reporting/dashboard-kpis'),
     getCashFlow: () => api.get('reporting/cash-flow'),
     getDRE: () => api.get('reporting/dre'),

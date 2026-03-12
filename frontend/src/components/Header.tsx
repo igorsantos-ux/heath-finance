@@ -45,7 +45,7 @@ const Header = () => {
             label: "Financeiro",
             items: [
                 { icon: <TrendingUp size={18} />, label: "Fluxo de Caixa", path: "/cash-flow" },
-                { icon: <ArrowUpCircle size={18} />, label: "Contas a Receber", path: "/receivables" },
+                { icon: <ArrowUpCircle size={18} />, label: "Pendenciais", path: "/pendenciais" },
                 { icon: <ArrowDownCircle size={18} />, label: "Contas a Pagar", path: "/payables" },
                 { icon: <Wallet size={18} />, label: "Recebimentos (Caixa)", path: "/income" },
                 { icon: <FileText size={18} />, label: "DRE", path: "/dre" },

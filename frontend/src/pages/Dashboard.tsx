@@ -60,15 +60,9 @@ const Dashboard = () => {
     });
     const [isSaving, setIsSaving] = useState(false);
 
-    // Buscando Dados Reais via React Query
-    const { data: summary, isLoading: isLoadingSummary } = useQuery({
-        queryKey: ['dashboard-kpis'],
-        queryFn: () => reportingApi.getDashboardKPIs().then(res => res.data)
-    });
-
-    const { data: evolution, isLoading: isLoadingEvolution } = useQuery({
-        queryKey: ['financial-evolution'],
-        queryFn: () => financialApi.getEvolution().then(res => res.data)
+    const { data: dashboard, isLoading: isLoadingDashboard } = useQuery({
+        queryKey: ['dashboard-real'],
+        queryFn: () => reportingApi.getDashboard().then(res => res.data)
     });
 
     const { data: goalsResponse, isLoading: isLoadingGoals } = useQuery({
@@ -113,7 +107,7 @@ const Dashboard = () => {
         }
     };
 
-    const isLoading = isLoadingSummary || isLoadingEvolution || isLoadingGoals;
+    const isLoading = isLoadingDashboard || isLoadingGoals;
 
     if (isLoading) {
         return (
@@ -164,28 +158,28 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <KPICard
                     title="Faturamento Total"
-                    value={`R$ ${summary?.revenue?.toLocaleString() || '0'}`}
+                    value={`R$ ${(dashboard?.cards?.faturamentoTotal ?? 0).toLocaleString('pt-BR')}`}
                     change="+0%"
                     trend="up"
                     icon={<DollarSign size={20} />}
                 />
                 <KPICard
                     title="Recebimentos Líquidos"
-                    value={`R$ ${summary?.netProfit?.toLocaleString() || '0'}`}
+                    value={`R$ ${(dashboard?.cards?.recebimentosLiquidos ?? 0).toLocaleString('pt-BR')}`}
                     change="+0%"
                     trend="up"
                     icon={<Wallet size={20} />}
                 />
                 <KPICard
                     title="Contas a Pagar"
-                    value={`R$ ${summary?.pendingPayables?.toLocaleString() || '0'}`}
+                    value={`R$ ${(dashboard?.cards?.contasAPagar ?? 0).toLocaleString('pt-BR')}`}
                     change="0%"
                     trend="down"
                     icon={<TrendingDown size={20} />}
                 />
                 <KPICard
                     title="Contas a Receber"
-                    value={`R$ ${summary?.pendingReceivables?.toLocaleString() || '0'}`}
+                    value={`R$ ${(dashboard?.cards?.contasAReceber ?? 0).toLocaleString('pt-BR')}`}
                     change="+0%"
                     trend="up"
                     icon={<TrendingUp size={20} />}
@@ -196,19 +190,19 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <MetricCard
                     title="Margem de Contribuição"
-                    value={`${summary?.margin?.toFixed(1) || '0'}%`}
+                    value={`${(dashboard?.cards?.margin ?? 0).toFixed(1)}%`}
                     description="Média dos últimos 30 dias"
                     icon={<Percent size={18} />}
                 />
                 <MetricCard
                     title="Fluxo de Caixa Projetado"
-                    value={`R$ ${summary?.estimatedBalance?.toLocaleString() || '0'}`}
+                    value="R$ 0"
                     description="Expectativa para o fim do mês"
                     icon={<PieChart size={18} />}
                 />
                 <MetricCard
                     title="Despesas Totais"
-                    value={`R$ ${summary?.expenses?.toLocaleString() || '0'}`}
+                    value={`R$ ${(dashboard?.cards?.despesasTotais ?? 0).toLocaleString('pt-BR')}`}
                     description="Fixas e Variáveis consolidadas"
                     icon={<TrendingDown size={18} />}
                 />
@@ -234,10 +228,11 @@ const Dashboard = () => {
                     </div>
 
                     <div className="h-80 flex items-end justify-between gap-4 px-2">
-                        {evolution?.map((item: any, i: number) => {
-                            const maxVal = Math.max(...evolution.map((e: any) => e.income), ...evolution.map((e: any) => e.expenses), 1000);
-                            const incomeH = (item.income / maxVal) * 100;
-                            const expenseH = (item.expenses / maxVal) * 100;
+                        {(dashboard?.chartData || []).map((item: any, i: number) => {
+                            const evolutionData = dashboard?.chartData || [];
+                            const maxVal = Math.max(...evolutionData.map((e: any) => e.receita), ...evolutionData.map((e: any) => e.despesa), 1000);
+                            const incomeH = (item.receita / maxVal) * 100;
+                            const expenseH = (item.despesa / maxVal) * 100;
 
                             return (
                                 <div key={i} className="flex-1 h-full flex flex-col items-center gap-4 group relative">
@@ -245,7 +240,7 @@ const Dashboard = () => {
                                         {/* Revenue Bar */}
                                         <div className="flex flex-col items-center gap-1 w-3 md:w-5 h-full justify-end group/income">
                                             <span className="opacity-0 group-hover/income:opacity-100 transition-all duration-300 absolute -top-10 text-[11px] font-black text-white bg-[#697D58] px-3 py-1.5 rounded-xl shadow-xl border border-[#8A9A5B]/20 z-10 whitespace-nowrap scale-90 group-hover/income:scale-100 origin-bottom">
-                                                R$ {item.income.toLocaleString('pt-BR')}
+                                                R$ {item.receita.toLocaleString('pt-BR')}
                                             </span>
                                             <div
                                                 className="w-full bg-[#8A9A5B] rounded-t-lg transition-all duration-500 hover:brightness-110 shadow-sm"
@@ -256,7 +251,7 @@ const Dashboard = () => {
                                         {/* Expense Bar */}
                                         <div className="flex flex-col items-center gap-1 w-3 md:w-5 h-full justify-end group/expense">
                                             <span className="opacity-0 group-hover/expense:opacity-100 transition-all duration-300 absolute -top-10 text-[11px] font-black text-white bg-[#DEB587] px-3 py-1.5 rounded-xl shadow-xl border border-[#DEB587]/20 z-10 whitespace-nowrap scale-90 group-hover/expense:scale-100 origin-bottom">
-                                                R$ {item.expenses.toLocaleString('pt-BR')}
+                                                R$ {item.despesa.toLocaleString('pt-BR')}
                                             </span>
                                             <div
                                                 className="w-full bg-[#DEB587] rounded-t-lg transition-all duration-500 hover:brightness-110 shadow-sm"

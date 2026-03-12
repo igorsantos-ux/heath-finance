@@ -87,6 +87,9 @@ model Transaction {
   doctorId      String?
   doctor        Doctor?  @relation(fields: [doctorId], references: [id])
   
+  fileUrl       String?  // URL do comprovante / anexo no Supabase Storage
+  dueDate       DateTime? // Data de vencimento para pendenciais
+  
   customerId    String?
   customer      Customer? @relation(fields: [customerId], references: [id])
   

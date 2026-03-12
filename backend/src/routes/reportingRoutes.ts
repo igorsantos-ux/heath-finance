@@ -8,6 +8,7 @@ const router = Router();
 router.use(authMiddleware, tenantMiddleware);
 
 router.get('/dashboard-kpis', ReportingController.getDashboardKPIs);
+router.get('/dashboard', ReportingController.getDashboardData);
 router.get('/cash-flow', ReportingController.getCashFlow);
 router.get('/dre', ReportingController.getDRE);
 router.get('/billing-analytics', ReportingController.getBillingAnalytics);

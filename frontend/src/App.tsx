@@ -8,7 +8,7 @@ import BillingPage from './pages/Billing';
 import PatientsPage from './pages/Patients';
 import ExpensesBilling from './pages/Analytics/ExpensesBilling';
 import PayablesPage from './pages/Financial/Payables';
-import ReceivablesPage from './pages/Financial/Receivables';
+import PendenciaisPage from './pages/Financial/Pendenciais';
 import DREPage from './pages/Financial/DRE';
 import DFCPage from './pages/Financial/DFC';
 import IncomePage from './pages/Financial/Income';
@@ -66,7 +66,7 @@ function App() {
               <Route path="/patients" element={<PatientsPage />} />
               <Route path="/despesas-faturamento" element={<ExpensesBilling />} />
               <Route path="/cash-flow" element={<CashFlow />} />
-              <Route path="/receivables" element={<ReceivablesPage />} />
+              <Route path="/pendenciais" element={<PendenciaisPage />} />
               <Route path="/payables" element={<PayablesPage />} />
               <Route path="/income" element={<IncomePage />} />
               <Route path="/dre" element={<DREPage />} />
