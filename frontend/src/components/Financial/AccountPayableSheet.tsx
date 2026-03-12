@@ -3,6 +3,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Calendar, Plus, Save, DollarSign, FileText, Loader2, ListOrdered, CalendarDays, RefreshCw, File } from 'lucide-react';
+import { payablesApi } from '../../services/api';
 // import { supabase } from '../../lib/supabase';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -143,6 +144,21 @@ export function AccountPayableSheet({ isOpen, onClose, onSave }: Props) {
   const onSubmit = async (data: AccountPayableFormData) => {
     try {
       setIsSubmitting(true);
+
+      let finalFileUrl = data.fileUrl;
+
+      // Realiza o upload se houver arquivo selecionado
+      if (selectedFile) {
+        try {
+          const formData = new FormData();
+          formData.append('file', selectedFile);
+          const uploadRes = await payablesApi.uploadFile(formData);
+          finalFileUrl = uploadRes.data.fileUrl;
+        } catch (uploadError) {
+          console.error("Falha ao subir arquivo:", uploadError);
+          // Opcional: alertar o usuário, mas aqui vamos tentar salvar sem o arquivo se falhar
+        }
+      }
       
       // Formata os dados para o Backend
       // Envia o GrantTotal (Original + Taxas) como o Total efetivo da dívida para o Controller
@@ -156,7 +172,7 @@ export function AccountPayableSheet({ isOpen, onClose, onSave }: Props) {
         penaltyValue: data.penaltyValue || 0,
         bank: data.bank,
         observation: data.observation,
-        fileUrl: data.fileUrl,
+        fileUrl: finalFileUrl,
         costCenter: data.costCenter,
         costType: data.costType,
         paymentMethod: data.paymentMethod,

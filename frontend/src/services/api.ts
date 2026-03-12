@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const getBaseURL = () => {
-    let url = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    let url = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
     // Remove barras duplicadas no final
     url = url.replace(/\/+$/, '');
     // Garante que termine com /api
@@ -73,6 +73,9 @@ export const payablesApi = {
     getPayables: (params?: { page?: number; limit?: number; filter?: string; search?: string }) => 
         api.get('contas-a-pagar', { params }),
     createPayable: (data: any) => api.post('contas-a-pagar', data),
+    uploadFile: (formData: FormData) => api.post('upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
 };
 
 export const coreApi = {
