@@ -196,7 +196,8 @@ const PayablesPage = () => {
                             { id: 'all', label: 'Todas' },
                             { id: 'overdue', label: 'Vencidas' },
                             { id: 'today', label: 'Hoje' },
-                            { id: 'upcoming', label: 'A Vencer' }
+                            { id: 'upcoming', label: 'A Vencer' },
+                            { id: 'pagas', label: 'Pagas' }
                         ].map((btn) => (
                             <button
                                 key={btn.id}
@@ -272,17 +273,20 @@ const PayablesPage = () => {
                                         </td>
                                         <td className="px-8 py-6 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                {/* Ação Rápida: Download de Anexo (Clip) */}
-                                                {item.fileUrl && (
+                                                {/* Ação Rápida: Download de Anexo (Extremamente visível) */}
+                                                {item.fileUrl ? (
                                                     <a 
                                                         href={item.fileUrl} 
                                                         target="_blank" 
                                                         rel="noreferrer" 
-                                                        className="p-2.5 text-[#8A9A5B] hover:bg-[#8A9A5B]/10 rounded-xl transition-all"
+                                                        className="flex items-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl border border-emerald-100 transition-all font-bold text-[10px] uppercase tracking-wider"
                                                         title="Visualizar Anexo"
                                                     >
-                                                        <FileDown size={18} />
+                                                        <FileDown size={16} />
+                                                        Anexo
                                                     </a>
+                                                ) : (
+                                                    <div className="w-[84px]"></div> // Placeholder para manter alinhamento
                                                 )}
                                                 
                                                 {/* Ação Rápida: Dar Baixa (Check) */}
@@ -290,7 +294,7 @@ const PayablesPage = () => {
                                                     <button 
                                                         onClick={() => updateStatusMutation.mutate({ id: item.id, status: 'PAGO' })}
                                                         disabled={updateStatusMutation.isPending}
-                                                        className="p-2.5 text-emerald-500 hover:bg-emerald-50 rounded-xl transition-all disabled:opacity-30"
+                                                        className="p-2.5 text-emerald-500 hover:bg-emerald-50 rounded-xl transition-all disabled:opacity-30 border border-transparent hover:border-emerald-100"
                                                         title="Marcar como Pago"
                                                     >
                                                         {updateStatusMutation.isPending ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}

@@ -47,6 +47,8 @@ export class AccountPayableController {
             } else if (filter === 'upcoming') {
                 where.status = 'PENDENTE';
                 where.dueDate = { gte: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+            } else if (filter === 'pagas') {
+                where.status = 'PAGO';
             }
 
             // Busca por descrição ou fornecedor (se houver termo)
@@ -78,7 +80,7 @@ export class AccountPayableController {
             const allUnpaid = await prisma.accountPayableInstallment.findMany({
                 where: {
                     accountPayable: { clinicId },
-                    status: 'PENDENTE'
+                    status: { in: ['PENDENTE', 'ATRASADO'] }
                 },
                 select: { amount: true, dueDate: true }
             });
