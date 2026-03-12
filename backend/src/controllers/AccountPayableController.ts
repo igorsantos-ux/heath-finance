@@ -285,4 +285,30 @@ export class AccountPayableController {
             return res.status(500).json({ message: 'Erro ao excluir parcela', error: error.message });
         }
     }
+
+    // Exclui a conta pai e todas as suas parcelas (Cascateamento no Prisma)
+    static async deleteSeries(req: Request, res: Response) {
+        try {
+            const { id } = req.params; // id da AccountPayable (conta pai)
+
+            const account = await prisma.accountPayable.findUnique({
+                where: { id },
+                select: { id: true }
+            });
+
+            if (!account) {
+                return res.status(404).json({ message: 'Conta não encontrada' });
+            }
+
+            // Exclui a conta pai (isso deletará as parcelas via Cascade no DB)
+            await prisma.accountPayable.delete({
+                where: { id }
+            });
+
+            return res.json({ message: 'Série de parcelas excluída com sucesso' });
+        } catch (error: any) {
+            console.error('Erro ao excluir série:', error);
+            return res.status(500).json({ message: 'Erro ao excluir série', error: error.message });
+        }
+    }
 }

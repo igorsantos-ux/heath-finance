@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
+import { DeleteConfirmationModal } from '../../components/Financial/DeleteConfirmationModal';
 
 const StatusBadge = ({ status, dueDate }: { status: string; dueDate: string }) => {
     // Para comparação de status dinâmico (Atrasado), usamos a data atual no fuso do usuário
@@ -74,6 +75,17 @@ const PayablesPage = () => {
     const [activeFilter, setActiveFilter] = useState<string>('all');
     const itemsPerPage = 20;
 
+    // Estado para Modal de Exclusão
+    const [deleteModal, setDeleteModal] = useState<{ 
+        open: boolean; 
+        item: any | null;
+        isSeries: boolean;
+    }>({ 
+        open: false, 
+        item: null,
+        isSeries: false
+    });
+
     // Mutação para atualizar status
     const updateStatusMutation = useMutation({
         mutationFn: ({ id, status }: { id: string; status: string }) => payablesApi.updatePayableStatus(id, status),
@@ -88,10 +100,12 @@ const PayablesPage = () => {
 
     // Mutação para excluir
     const deleteMutation = useMutation({
-        mutationFn: (id: string) => payablesApi.deletePayable(id),
+        mutationFn: ({ id, isSeries }: { id: string; isSeries: boolean }) => 
+            isSeries ? payablesApi.deletePayableSeries(id) : payablesApi.deletePayable(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payables-list-v4'] });
-            toast.success('Conta excluída com sucesso!');
+            toast.success('Exclusão realizada com sucesso!');
+            setDeleteModal({ open: false, item: null, isSeries: false });
         },
         onError: (err: any) => {
             toast.error('Erro ao excluir: ' + (err.response?.data?.message || err.message));
@@ -132,6 +146,7 @@ const PayablesPage = () => {
                 
                 return {
                     id: inst.id,
+                    accountPayableId: account.id, // ID da conta pai
                     description: String(account.description || 'Despesa') + 
                         (account.isInstallment ? ` (Parcela ${inst.installmentNumber}/${account.installmentsCount})` : ''),
                     category: String(account.documentNumber ? `NF: ${account.documentNumber}` : (account.supplierName ? `${account.supplierName}` : 'Despesa')),
@@ -142,7 +157,8 @@ const PayablesPage = () => {
                     fileUrl: account.fileUrl, 
                     supplierName: account.supplierName,
                     costCenter: account.costCenter,
-                    costType: account.costType
+                    costType: account.costType,
+                    isInstallment: account.isInstallment
                 };
             }).filter(Boolean);
         } catch (error) {
@@ -334,11 +350,7 @@ const PayablesPage = () => {
                                                             </button>
                                                         )}
                                                         <button 
-                                                            onClick={() => {
-                                                                if (window.confirm('Tem certeza que deseja excluir esta parcela?')) {
-                                                                    deleteMutation.mutate(item.id);
-                                                                }
-                                                            }}
+                                                            onClick={() => setDeleteModal({ open: true, item, isSeries: false })}
                                                             className="w-full text-left px-5 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
                                                         >
                                                             Excluir
@@ -384,6 +396,16 @@ const PayablesPage = () => {
                 isOpen={isSheetOpen}
                 onClose={() => setIsSheetOpen(false)}
                 onSave={handleSaveAccount}
+            />
+
+            <DeleteConfirmationModal 
+                isOpen={deleteModal.open}
+                onClose={() => setDeleteModal({ open: false, item: null, isSeries: false })}
+                description={deleteModal.item?.description}
+                isInstallment={deleteModal.item?.isInstallment}
+                isDeleting={deleteMutation.isPending}
+                onConfirmSingle={() => deleteMutation.mutate({ id: deleteModal.item.id, isSeries: false })}
+                onConfirmSeries={() => deleteMutation.mutate({ id: deleteModal.item.accountPayableId, isSeries: true })}
             />
         </div>
     );

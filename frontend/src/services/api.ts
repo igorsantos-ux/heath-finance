@@ -75,6 +75,7 @@ export const payablesApi = {
     createPayable: (data: any) => api.post('contas-a-pagar', data),
     updatePayableStatus: (id: string, status: string) => api.patch(`contas-a-pagar/${id}/status`, { status }),
     deletePayable: (id: string) => api.delete(`contas-a-pagar/${id}`),
+    deletePayableSeries: (id: string) => api.delete(`contas-a-pagar/series/${id}`),
     uploadFile: (formData: FormData) => api.post('upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),

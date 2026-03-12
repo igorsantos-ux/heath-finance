@@ -19,4 +19,7 @@ router.patch('/:id/status', AccountPayableController.updateStatus);
 // Rota para excluir uma parcela
 router.delete('/:id', AccountPayableController.delete);
 
+// Rota para excluir uma série completa (conta pai + todas as parcelas)
+router.delete('/series/:id', AccountPayableController.deleteSeries);
+
 export default router;
