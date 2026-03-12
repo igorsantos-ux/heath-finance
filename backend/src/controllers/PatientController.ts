@@ -121,42 +121,48 @@ export class PatientController {
         try {
             const { id } = req.params;
             const data = req.body;
+            console.log(`📝 Iniciando update do paciente ${id}. Dados recebidos:`, data.fullName);
 
             const cleanData = { ...data };
             
-            // Campos que NUNCA devem ser atualizados via formulário
-            delete (cleanData as any).id;
-            delete (cleanData as any).clinicId;
-            delete (cleanData as any).transactions;
-            delete (cleanData as any).createdAt;
-            delete (cleanData as any).updatedAt;
+            // Campos proibidos ou calculados que devem ser removidos do payload de atualização
+            const forbiddenFields = [
+                'id', 'clinicId', 'transactions', 'createdAt', 'updatedAt', 
+                'totalSpent', 'visitCount', 'lastVisit', 'averageTicket', 
+                'procedures', 'classification'
+            ];
             
-            // Campos analíticos calculados no list
-            delete (cleanData as any).totalSpent;
-            delete (cleanData as any).visitCount;
-            delete (cleanData as any).lastVisit;
-            delete (cleanData as any).averageTicket;
-            delete (cleanData as any).procedures;
-            delete (cleanData as any).classification;
+            forbiddenFields.forEach(field => delete (cleanData as any)[field]);
 
-            if (cleanData.weight === '') cleanData.weight = null;
-            if (cleanData.height === '') cleanData.height = null;
+            // Tratamento especial para booleanos e números vindo como string do form
+            const updatePayload: any = {
+                ...cleanData,
+                smoker: data.smoker === true || data.smoker === 'true',
+                weight: (data.weight !== undefined && data.weight !== '') ? parseFloat(data.weight) : null,
+                height: (data.height !== undefined && data.height !== '') ? parseFloat(data.height) : null,
+            };
+
+            // Tratamento de data para o Prisma (DateTime)
+            if (data.birthDate) {
+                updatePayload.birthDate = new Date(data.birthDate);
+            } else if (data.birthDate === '') {
+                updatePayload.birthDate = null;
+            }
 
             const patient = await prisma.patient.update({
                 where: { id },
-                data: {
-                    ...cleanData,
-                    birthDate: data.birthDate ? new Date(data.birthDate) : null,
-                    weight: cleanData.weight ? parseFloat(cleanData.weight) : null,
-                    height: cleanData.height ? parseFloat(cleanData.height) : null,
-                    smoker: data.smoker === true || data.smoker === 'true'
-                }
+                data: updatePayload
             });
 
+            console.log(`✅ Paciente ${id} atualizado com sucesso.`);
             res.json(patient);
         } catch (error: any) {
-            console.error('Error updating patient:', error);
-            res.status(500).json({ error: 'Erro ao atualizar paciente' });
+            console.error('❌ Erro no update do paciente:', error);
+            // Mensagem de erro amigável se for violação de unique (CPF)
+            if (error.code === 'P2002') {
+                return res.status(400).json({ error: 'Este CPF já está cadastrado para outro paciente.' });
+            }
+            res.status(500).json({ error: 'Erro interno ao atualizar paciente' });
         }
     }
 
