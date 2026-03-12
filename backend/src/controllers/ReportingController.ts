@@ -89,7 +89,45 @@ export class ReportingController {
                 _sum: { amount: true }
             });
 
-            // 3. Gráfico de Evolução (Últimos 6 meses)
+            // 3. Receitas e Faturamento (Mês Atual)
+            // Faturamento Total = Tudo gerado no mês (INCOME)
+            const monthRevenue = await prisma.transaction.aggregate({
+                where: {
+                    clinicId,
+                    type: 'INCOME',
+                    dueDate: {
+                        gte: firstDayMonth,
+                        lte: lastDayMonth
+                    }
+                },
+                _sum: { amount: true }
+            });
+
+            // Recebimentos Líquidos = Tudo RECEBIDO (PAID) no mês atual
+            const monthPaidRevenue = await prisma.transaction.aggregate({
+                where: {
+                    clinicId,
+                    type: 'INCOME',
+                    status: 'PAID',
+                    date: {
+                        gte: firstDayMonth,
+                        lte: lastDayMonth
+                    }
+                },
+                _sum: { amount: true }
+            });
+
+            // Contas a Receber = Tudo que NÃO foi pago (TOTAL PENDENTE + ATRASADO)
+            const pendingRevenue = await prisma.transaction.aggregate({
+                where: {
+                    clinicId,
+                    type: 'INCOME',
+                    status: 'PENDING'
+                },
+                _sum: { amount: true }
+            });
+
+            // 4. Gráfico de Evolução (Últimos 6 meses)
             const chartData = [];
             for (let i = 5; i >= 0; i--) {
                 const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
@@ -106,19 +144,31 @@ export class ReportingController {
                     _sum: { amount: true }
                 });
 
+                const income = await prisma.transaction.aggregate({
+                    where: {
+                        clinicId,
+                        type: 'INCOME',
+                        dueDate: {
+                            gte: date,
+                            lt: nextDate
+                        }
+                    },
+                    _sum: { amount: true }
+                });
+
                 chartData.push({
                     month: date.toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase().replace('.', ''),
-                    receita: 0, // Estático por enquanto
+                    receita: income._sum.amount || 0,
                     despesa: expenses._sum.amount || 0
                 });
             }
 
             return res.json({
                 cards: {
-                    faturamentoTotal: 0,
-                    recebimentosLiquidos: 0,
+                    faturamentoTotal: monthRevenue._sum.amount || 0,
+                    recebimentosLiquidos: monthPaidRevenue._sum.amount || 0,
                     contasAPagar: unpaidInstallments._sum.amount || 0,
-                    contasAReceber: 0,
+                    contasAReceber: pendingRevenue._sum.amount || 0,
                     despesasTotais: monthExpenses._sum.amount || 0,
                     margin: 0 // Mock por enquanto
                 },
