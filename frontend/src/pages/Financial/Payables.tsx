@@ -104,7 +104,7 @@ const PayablesPage = () => {
             const dB = new Date(b?.date).getTime();
             return (isNaN(dA) ? 0 : dA) - (isNaN(dB) ? 0 : dB);
         });
-    }, [payablesData, searchTerm]);
+    }, [payablesResponse, searchTerm]);
 
     const formatDateSafe = (dateStr: any) => {
         try {
@@ -246,7 +246,8 @@ const PayablesPage = () => {
                                                             href={item.fileUrl} 
                                                             target="_blank" 
                                                             rel="noopener noreferrer"
-                                                            className="p-2 hover:bg-[#8A9A5B]/10 rounded-lg transition-all text-[#8A9A5B] title='Ver Anexo'"
+                                                            title="Ver Anexo"
+                                                            className="p-2 hover:bg-[#8A9A5B]/10 rounded-lg transition-all text-[#8A9A5B]"
                                                         >
                                                             <FileText size={18} />
                                                         </a>

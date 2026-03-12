@@ -3,7 +3,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Calendar, Plus, Save, DollarSign, FileText, Loader2, ListOrdered, CalendarDays, RefreshCw, Upload, File, Trash2, Building2, MessageSquare, ExternalLink } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+// import { supabase } from '../../lib/supabase';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const accountPayableSchema = z.object({
@@ -85,6 +85,7 @@ export function AccountPayableSheet({ isOpen, onClose, onSave }: Props) {
   const calculatedGrandTotal = Number((watchTotalAmount + watchInterest + watchPenalty).toFixed(2));
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    /* 
     try {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -115,6 +116,8 @@ export function AccountPayableSheet({ isOpen, onClose, onSave }: Props) {
     } finally {
       setUploading(false);
     }
+    */
+    console.log('Upload temporariamente desativado para debug.');
   };
 
   // Função para gerar as parcelas automaticamente
