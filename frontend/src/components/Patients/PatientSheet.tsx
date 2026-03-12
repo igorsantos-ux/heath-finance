@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -59,12 +59,7 @@ export function PatientSheet({ isOpen, onClose, onSave, patient }: Props) {
 
   const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
-    defaultValues: patient ? {
-        ...patient,
-        birthDate: patient.birthDate ? new Date(patient.birthDate).toISOString().split('T')[0] : '',
-        weight: patient.weight?.toString() || '',
-        height: patient.height?.toString() || '',
-    } : {
+    defaultValues: {
       fullName: '',
       smoker: false,
       gender: '',
@@ -74,14 +69,78 @@ export function PatientSheet({ isOpen, onClose, onSave, patient }: Props) {
     }
   });
 
+  // Reset reativo do formulário quando o paciente muda ou o Modal abre
+  useEffect(() => {
+    if (isOpen) {
+        if (patient) {
+            try {
+                const formattedBirthDate = patient.birthDate 
+                    ? new Date(patient.birthDate).toISOString().split('T')[0] 
+                    : '';
+
+                reset({
+                    ...patient,
+                    birthDate: formattedBirthDate,
+                    weight: patient.weight?.toString() ?? '',
+                    height: patient.height?.toString() ?? '',
+                    email: patient.email ?? '',
+                    smoker: Boolean(patient.smoker)
+                });
+                setPhotoPreview(patient.photoUrl || null);
+            } catch (error) {
+                console.error("Erro ao formatar dados do paciente para edição:", error);
+                reset({ ...patient, birthDate: '' });
+            }
+        } else {
+            // Se for novo paciente, limpa tudo
+            reset({
+                fullName: '',
+                socialName: '',
+                cpf: '',
+                rg: '',
+                birthDate: '',
+                gender: '',
+                color: '',
+                maritalStatus: '',
+                profession: '',
+                education: '',
+                religion: '',
+                phone: '',
+                email: '',
+                address: '',
+                origin: '',
+                weight: '',
+                height: '',
+                disability: '',
+                allergies: '',
+                smoker: false,
+                priority: 'Normal',
+                insurance: '',
+                insurancePlan: '',
+                photoUrl: ''
+            });
+            setPhotoPreview(null);
+        }
+    }
+  }, [patient, isOpen, reset]);
+
   const onSubmit = async (data: any) => {
     try {
       setIsSubmitting(true);
+      
+      // Sanitização final de dados numéricos para a API
+      const payload = {
+        ...data,
+        weight: data.weight ? parseFloat(data.weight) : null,
+        height: data.height ? parseFloat(data.height) : null,
+      };
+
       if (patient?.id) {
-        await coreApi.updatePatient(patient.id, data);
+        await coreApi.updatePatient(patient.id, payload);
       } else {
-        await coreApi.createPatient(data);
+        await coreApi.createPatient(payload);
       }
+      
       onSave();
       onClose();
       reset();
