@@ -100,7 +100,7 @@ const CostCenterChart = ({ data }: { data: any[] }) => {
                                 textTransform: 'uppercase',
                                 padding: '12px 16px'
                             }}
-                            formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Total']}
+                            formatter={(value: any) => [`R$ ${Number(value || 0).toLocaleString('pt-BR')}`, 'Total']}
                         />
                         <Legend 
                             layout="vertical"
