@@ -61,9 +61,9 @@ export function AccountPayableSheet({ isOpen, onClose, onSave }: Props) {
   });
 
   const watchIsInstallment = watch('isInstallment');
-  const watchTotalAmount = watch('totalAmount') || 0;
-  const watchInterest = watch('interestValue') || 0;
-  const watchPenalty = watch('penaltyValue') || 0;
+  const watchTotalAmount = Number(watch('totalAmount')) || 0;
+  const watchInterest = Number(watch('interestValue')) || 0;
+  const watchPenalty = Number(watch('penaltyValue')) || 0;
   const watchInstallmentsCount = watch('installmentsCount') || 1;
   const watchInterval = watch('installmentInterval');
 

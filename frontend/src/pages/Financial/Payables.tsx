@@ -82,22 +82,36 @@ const PayablesPage = () => {
         const flattened = payablesData.flatMap((account: any) => {
             const installments = Array.isArray(account?.installments) ? account.installments : [];
             return installments.map((inst: any) => ({
-                id: inst?.id,
+                id: inst?.id || Math.random().toString(),
                 accountId: account?.id,
-                description: (account?.description || 'Despesa') + (account?.isInstallment ? ` (Parcela ${inst?.installmentNumber || 1}/${account?.installmentsCount || 1})` : ''),
-                category: account?.documentNumber ? `NF: ${account.documentNumber}` : 'Despesa',
+                description: String(account?.description || 'Despesa') + (account?.isInstallment ? ` (Parcela ${inst?.installmentNumber || 1}/${account?.installmentsCount || 1})` : ''),
+                category: String(account?.documentNumber ? `NF: ${account.documentNumber}` : (account?.supplierName ? `Fornecedor: ${account.supplierName}` : 'Despesa')),
                 amount: Number(inst?.amount || 0),
                 date: inst?.dueDate || new Date().toISOString(),
-                status: inst?.status || 'PENDING',
-                paymentMethod: inst?.paymentMethod || account?.paymentMethod || 'Não informado'
+                status: String(inst?.status || 'PENDING'),
+                paymentMethod: String(inst?.paymentMethod || account?.paymentMethod || 'Não informado')
             }));
         });
 
         return flattened.filter((t: any) =>
-            t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            t.category.toLowerCase().includes(searchTerm.toLowerCase())
-        ).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            (t?.description || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
+            (t?.category || '').toLowerCase().includes((searchTerm || '').toLowerCase())
+        ).sort((a: any, b: any) => {
+            const dA = new Date(a?.date).getTime();
+            const dB = new Date(b?.date).getTime();
+            return (isNaN(dA) ? 0 : dA) - (isNaN(dB) ? 0 : dB);
+        });
     }, [payablesData, searchTerm]);
+
+    const formatDateSafe = (dateStr: any) => {
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return 'Data Inválida';
+            return d.toLocaleDateString('pt-BR');
+        } catch {
+            return 'Data Inválida';
+        }
+    };
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
@@ -193,7 +207,7 @@ const PayablesPage = () => {
                                             </td>
                                             <td className="px-8 py-6">
                                                 <p className="text-xs font-bold text-slate-600">
-                                                    {new Date(item.date).toLocaleDateString('pt-BR')}
+                                                    {formatDateSafe(item.date)}
                                                 </p>
                                             </td>
                                             <td className="px-8 py-6">
