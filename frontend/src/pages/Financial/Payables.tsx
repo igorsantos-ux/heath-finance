@@ -12,7 +12,8 @@ import {
     Search,
     CheckCircle2,
     MoreVertical,
-    FileDown
+    FileDown,
+    Paperclip
 } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
@@ -273,23 +274,7 @@ const PayablesPage = () => {
                                         </td>
                                         <td className="px-8 py-6 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                {/* Ação Rápida: Download de Anexo (Extremamente visível) */}
-                                                {item.fileUrl ? (
-                                                    <a 
-                                                        href={item.fileUrl} 
-                                                        target="_blank" 
-                                                        rel="noreferrer" 
-                                                        className="flex items-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl border border-emerald-100 transition-all font-bold text-[10px] uppercase tracking-wider"
-                                                        title="Visualizar Anexo"
-                                                    >
-                                                        <FileDown size={16} />
-                                                        Anexo
-                                                    </a>
-                                                ) : (
-                                                    <div className="w-[84px]"></div> // Placeholder para manter alinhamento
-                                                )}
-                                                
-                                                {/* Ação Rápida: Dar Baixa (Check) */}
+                                                {/* Ação Rápida: Dar Baixa (Check) - Agora posicionado primeiro */}
                                                 {item.status !== 'PAGO' && (
                                                     <button 
                                                         onClick={() => updateStatusMutation.mutate({ id: item.id, status: 'PAGO' })}
@@ -299,6 +284,19 @@ const PayablesPage = () => {
                                                     >
                                                         {updateStatusMutation.isPending ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
                                                     </button>
+                                                )}
+
+                                                {/* Ação Rápida: Visualizar Anexo (Clipe de Papel) */}
+                                                {item.fileUrl && (
+                                                    <a 
+                                                        href={item.fileUrl} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer" 
+                                                        className="p-2.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                                        title="Visualizar Anexo"
+                                                    >
+                                                        <Paperclip size={18} />
+                                                    </a>
                                                 )}
                                                 
                                                 <div className="relative group/menu">
