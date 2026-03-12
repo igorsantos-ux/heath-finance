@@ -131,6 +131,42 @@ export class AccountPayableController {
                     percentage: totalPending > 0 ? Number(((value / totalPending) * 100).toFixed(1)) : 0
                 })).sort((a, b) => b.value - a.value);
 
+                // --- 4. Busca Evolução Mensal (Comparativo por Centro de Custo) ---
+                const sixMonthsAgo = new Date();
+                sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+                
+                const allRecent = await prisma.accountPayableInstallment.findMany({
+                    where: {
+                        accountPayable: { clinicId },
+                        dueDate: { gte: sixMonthsAgo }
+                    },
+                    select: {
+                        amount: true,
+                        dueDate: true,
+                        accountPayable: {
+                            select: { costCenter: true }
+                        }
+                    },
+                    orderBy: { dueDate: 'asc' }
+                });
+
+                const monthlyMap: Record<string, any> = {};
+
+                allRecent.forEach(inst => {
+                    const date = new Date(inst.dueDate);
+                    const monthKey = date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).toUpperCase();
+                    const center = inst.accountPayable?.costCenter || 'Geral';
+                    const amt = Number(inst.amount) || 0;
+
+                    if (!monthlyMap[monthKey]) {
+                        monthlyMap[monthKey] = { month: monthKey };
+                    }
+                    
+                    monthlyMap[monthKey][center] = (monthlyMap[monthKey][center] || 0) + amt;
+                });
+
+                const monthlyComparison = Object.values(monthlyMap);
+
                 return res.json({
                     items: installments,
                     totalItems,
@@ -140,7 +176,8 @@ export class AccountPayableController {
                         totalPending,
                         totalOverdue,
                         totalDueToday,
-                        costCenterDistribution: distribution
+                        costCenterDistribution: distribution,
+                        monthlyComparison
                     }
                 });
             } catch (summaryError) {

@@ -22,7 +22,12 @@ import {
     Cell, 
     ResponsiveContainer, 
     Tooltip, 
-    Legend 
+    Legend,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid
 } from 'recharts';
 
 const StatusBadge = ({ status, dueDate }: { status: string; dueDate: string }) => {
@@ -120,6 +125,79 @@ const CostCenterChart = ({ data }: { data: any[] }) => {
     );
 };
 
+const MonthlyComparisonChart = ({ data }: { data: any[] }) => {
+    const COLORS = ['#8A9A5B', '#DEB587', '#E5A988', '#64748B', '#F43F5E', '#F59E0B', '#10B981'];
+
+    const costCenters = useMemo(() => {
+        try {
+            const keys = new Set<string>();
+            data.forEach(item => {
+                Object.keys(item).forEach(key => {
+                    if (key !== 'month') keys.add(key);
+                });
+            });
+            return Array.from(keys);
+        } catch {
+            return [];
+        }
+    }, [data]);
+
+    if (!data || data.length === 0) {
+        return (
+            <div className="h-[300px] flex items-center justify-center bg-white/50 rounded-[2.5rem] border border-dashed border-[#8A9A5B]/20">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Sem dados para o comparativo mensal</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-white/80 backdrop-blur-md p-8 rounded-[2.5rem] border border-[#8A9A5B]/10 shadow-sm flex flex-col h-full min-h-[300px]">
+            <h3 className="text-[10px] font-black text-[#697D58] uppercase tracking-[0.2em] mb-6">Evolução Mensal por Centro</h3>
+            <div className="w-full h-full min-h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#8A9A5B20" />
+                        <XAxis 
+                            dataKey="month" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 9, fontWeight: 900, fill: '#94A3B8' }}
+                        />
+                        <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 9, fontWeight: 900, fill: '#94A3B8' }}
+                            tickFormatter={(value) => `R$${value >= 1000 ? (value/1000).toFixed(0)+'k' : value}`}
+                        />
+                        <Tooltip 
+                            cursor={{ fill: '#8A9A5B05' }}
+                            contentStyle={{ 
+                                borderRadius: '1.5rem', 
+                                border: 'none', 
+                                boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
+                                fontWeight: '900',
+                                fontSize: '10px',
+                                textTransform: 'uppercase'
+                            }}
+                            formatter={(value: any) => [`R$ ${Number(value).toLocaleString('pt-BR')}`, '']}
+                        />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 900, textTransform: 'uppercase', paddingTop: '20px' }} />
+                        {costCenters.map((center, index) => (
+                            <Bar 
+                                key={center} 
+                                dataKey={center} 
+                                stackId="a" 
+                                fill={COLORS[index % COLORS.length]} 
+                                radius={index === costCenters.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                            />
+                        ))}
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+        </div>
+    );
+};
+
 const StatCard = ({ title, value, icon, color, alert }: any) => (
     <div className={`bg-white p-6 rounded-3xl border ${alert ? 'border-[#DEB587]/30 shadow-lg shadow-[#DEB587]/5' : 'border-[#8A9A5B]/10 shadow-sm'} flex items-center gap-5 group`}>
         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${color === 'moss' ? 'bg-[#8A9A5B]/10 text-[#8A9A5B]' : 'bg-[#DEB587]/10 text-[#DEB587]'
@@ -199,7 +277,8 @@ const PayablesPage = () => {
             totalPending: payablesResponse?.summary?.totalPending ?? 0,
             totalOverdue: payablesResponse?.summary?.totalOverdue ?? 0,
             totalDueToday: payablesResponse?.summary?.totalDueToday ?? 0,
-            costCenterDistribution: payablesResponse?.summary?.costCenterDistribution ?? []
+            costCenterDistribution: payablesResponse?.summary?.costCenterDistribution ?? [],
+            monthlyComparison: payablesResponse?.summary?.monthlyComparison ?? []
         };
     }, [payablesResponse]);
 
@@ -284,9 +363,9 @@ const PayablesPage = () => {
             </div>
 
             {/* Dashboard Analítico Superior */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-                {/* Métricas Principais */}
-                <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+            <div className="space-y-6 mb-10">
+                {/* Linha 1: KPIs Principais (3 Colunas) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <StatCard 
                         title="Total Pendente" 
                         value={`R$ ${Number(payablesSummary.totalPending).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} 
@@ -308,8 +387,18 @@ const PayablesPage = () => {
                     />
                 </div>
 
-                {/* Gráfico de Distribuição */}
-                <CostCenterChart data={payablesSummary.costCenterDistribution || []} />
+                {/* Linha 2: Gráficos (2/3 e 1/3) */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Gráfico Comparativo Mensal (Esq - 2 Colunas) */}
+                    <div className="lg:col-span-2">
+                        <MonthlyComparisonChart data={payablesSummary.monthlyComparison} />
+                    </div>
+
+                    {/* Gráfico de Distribuição (Dir - 1 Coluna) */}
+                    <div className="lg:col-span-1">
+                        <CostCenterChart data={payablesSummary.costCenterDistribution || []} />
+                    </div>
+                </div>
             </div>
 
             <div className="bg-white/70 backdrop-blur-md rounded-[2.5rem] border border-[#8A9A5B]/10 shadow-sm overflow-hidden py-2">
