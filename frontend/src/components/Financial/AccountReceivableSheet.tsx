@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 const receivableSchema = z.object({
   description: z.string().min(3, 'A descrição deve ter pelo menos 3 caracteres'),
-  customerId: z.string().min(1, 'Selecione ou informe o paciente'),
+  patientId: z.string().min(1, 'Selecione ou informe o paciente'),
   procedureName: z.string().min(1, 'O procedimento é obrigatório'),
   amount: z.number().min(0.01, 'O valor deve ser maior que zero'),
   dueDate: z.string().min(1, 'A data de vencimento é obrigatória'),
@@ -18,7 +18,7 @@ const receivableSchema = z.object({
 
 interface ReceivableFormData {
   description: string;
-  customerId: string;
+  patientId: string;
   procedureName: string;
   amount: number;
   dueDate: string;
@@ -41,7 +41,7 @@ export function AccountReceivableSheet({ isOpen, onClose, onSave }: Props) {
     resolver: zodResolver(receivableSchema),
     defaultValues: {
       description: '',
-      customerId: '',
+      patientId: '',
       procedureName: '',
       amount: 0,
       dueDate: new Date().toISOString().split('T')[0],
@@ -166,15 +166,16 @@ export function AccountReceivableSheet({ isOpen, onClose, onSave }: Props) {
                       <User size={14} /> Paciente / Cliente
                     </label>
                     <select
-                      {...register('customerId')}
-                      className="w-full bg-white border border-[#8A9A5B]/20 rounded-2xl px-5 py-4 text-slate-700 font-bold focus:ring-4 focus:ring-[#8A9A5B]/10 outline-none transition-all"
+                      {...register('patientId')}
+                      className="w-full bg-white border border-[#8A9A5B]/20 rounded-2xl px-5 py-4 text-slate-700 font-bold focus:ring-4 focus:ring-[#8A9A5B]/10 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={patients.length === 0}
                     >
-                      <option value="">Selecione um paciente...</option>
+                      <option value="">{patients.length === 0 ? "Carregando pacientes..." : "Selecione um paciente..."}</option>
                       {patients.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
+                        <option key={p.id} value={p.id}>{p.fullName || p.name}</option>
                       ))}
                     </select>
-                    {errors.customerId && <span className="text-red-500 text-[10px] font-black uppercase tracking-tight">{errors.customerId.message}</span>}
+                    {errors.patientId && <span className="text-red-500 text-[10px] font-black uppercase tracking-tight">{errors.patientId.message}</span>}
                   </div>
 
                   {/* Procedimento */}

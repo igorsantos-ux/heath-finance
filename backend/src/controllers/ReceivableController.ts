@@ -58,7 +58,7 @@ export class ReceivableController {
             if (search) {
                 where.OR = [
                     { description: { contains: String(search), mode: 'insensitive' } },
-                    { customer: { name: { contains: String(search), mode: 'insensitive' } } },
+                    { patient: { fullName: { contains: String(search), mode: 'insensitive' } } },
                     { procedureName: { contains: String(search), mode: 'insensitive' } }
                 ];
             }
@@ -67,7 +67,7 @@ export class ReceivableController {
             const transactions = await prisma.transaction.findMany({
                 where,
                 include: {
-                    customer: { select: { id: true, name: true } },
+                    patient: { select: { id: true, fullName: true } },
                     doctor: { select: { id: true, name: true } }
                 },
                 orderBy: [
@@ -193,7 +193,7 @@ export class ReceivableController {
             const clinicId = (req as any).user?.clinicId;
             const { 
                 description, 
-                customerId, 
+                patientId, 
                 procedureName, 
                 amount, 
                 dueDate, 
@@ -217,7 +217,7 @@ export class ReceivableController {
                     dueDate: new Date(dueDate),
                     date: status === 'RECEBIDO' ? new Date() : new Date(dueDate),
                     fileUrl,
-                    customerId,
+                    patientId,
                     clinicId: clinicId!
                 }
             });

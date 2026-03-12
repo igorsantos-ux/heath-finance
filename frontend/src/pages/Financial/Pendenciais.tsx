@@ -383,7 +383,7 @@ const PendenciaisPage = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6 text-xs font-bold text-slate-600">{item.customer?.name || '-'}</td>
+                                        <td className="px-8 py-6 text-xs font-bold text-slate-600">{item.patient?.fullName || '-'}</td>
                                         <td className="px-8 py-6 text-xs font-bold text-slate-600 text-center">{formatDate(item.dueDate)}</td>
                                         <td className="px-8 py-6 text-sm font-black text-slate-800 text-center">R$ {item.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                                         <td className="px-8 py-6 text-center">
