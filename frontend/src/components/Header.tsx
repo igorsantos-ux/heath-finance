@@ -15,7 +15,8 @@ import {
     ChevronDown,
     Menu,
     X,
-    Settings
+    Settings,
+    Calculator
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -48,6 +49,7 @@ const Header = () => {
                 { icon: <ArrowUpCircle size={18} />, label: "Pendenciais", path: "/pendenciais" },
                 { icon: <ArrowDownCircle size={18} />, label: "Contas a Pagar", path: "/payables" },
                 { icon: <Wallet size={18} />, label: "Recebimentos (Caixa)", path: "/income" },
+                { icon: <Calculator size={18} />, label: "Precificação", path: "/pricing" },
                 { icon: <FileText size={18} />, label: "DRE", path: "/dre" },
                 { icon: <FileText size={18} />, label: "DFC", path: "/dfc" },
             ]
