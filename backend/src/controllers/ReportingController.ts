@@ -36,9 +36,17 @@ export class ReportingController {
 
     static async getBillingAnalytics(req: any, res: Response) {
         try {
-            const data = await BillingService.getBillingAnalytics(req.clinicId);
+            const { startDate, endDate, groupBy } = req.query;
+            const params = {
+                clinicId: req.clinicId,
+                startDate: startDate ? new Date(startDate as string) : undefined,
+                endDate: endDate ? new Date(endDate as string) : undefined,
+                groupBy: (groupBy as string) || 'month'
+            };
+            const data = await BillingService.getBillingAnalytics(params);
             res.json(data);
         } catch (error) {
+            console.error('Erro getBillingAnalytics:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }

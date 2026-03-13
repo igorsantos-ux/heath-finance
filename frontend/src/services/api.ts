@@ -106,7 +106,13 @@ export const reportingApi = {
     getDashboardKPIs: () => api.get('reporting/dashboard-kpis'),
     getCashFlow: () => api.get('reporting/cash-flow'),
     getDRE: () => api.get('reporting/dre'),
-    getBillingAnalytics: () => api.get('reporting/billing-analytics'),
+    getBillingAnalytics: (params?: { startDate?: string; endDate?: string; groupBy?: string }) => {
+        const query = new URLSearchParams();
+        if (params?.startDate) query.append('startDate', params.startDate);
+        if (params?.endDate) query.append('endDate', params.endDate);
+        if (params?.groupBy) query.append('groupBy', params.groupBy);
+        return api.get(`reporting/billing-analytics?${query.toString()}`);
+    },
     getGoals: () => api.get('reporting/goals'),
     postSmartGoal: (targetProfit: number) => api.post('reporting/smart-goal', { targetProfit }),
 };

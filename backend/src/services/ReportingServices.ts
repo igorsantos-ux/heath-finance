@@ -97,46 +97,152 @@ export class CashFlowService {
     }
 }
 
+interface BillingAnalyticsParams {
+    clinicId: string;
+    startDate?: Date;
+    endDate?: Date;
+    groupBy?: string; // 'day' | 'week' | 'month'
+}
+
 export class BillingService {
-    static async getBillingAnalytics(clinicId: string) {
-        const transactions = await prisma.transaction.findMany({
+    static async getBillingAnalytics({ clinicId, startDate, endDate, groupBy = 'month' }: BillingAnalyticsParams) {
+        
+        // 1. Definir o período atual
+        const now = new Date();
+        const start = startDate || new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = endDate || now;
+
+        // 2. Definir o período ANTERIOR para cálculo de crescimento
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const prevStart = new Date(start.getTime() - diffTime);
+        const prevEnd = new Date(end.getTime() - diffTime);
+
+        // 3. Buscar transações do Período Atual (PAGAS)
+        const currentTransactions = await prisma.transaction.findMany({
             where: {
                 clinicId,
                 type: 'INCOME',
-                status: 'PAID'
+                status: 'PAID',
+                date: { gte: start, lte: end }
             },
-            include: {
-                doctor: true
+            include: { doctor: true, patient: true }
+        });
+
+        // 4. Buscar transações do Período Anterior
+        const previousTransactions = await prisma.transaction.findMany({
+            where: {
+                clinicId,
+                type: 'INCOME',
+                status: 'PAID',
+                date: { gte: prevStart, lte: prevEnd }
             }
         });
 
-        const totalBilling = transactions.reduce((acc, t) => acc + t.amount, 0);
+        // --- CÁLCULOS DOS KPIs ---
+        const totalBilling = currentTransactions.reduce((acc, t) => acc + t.amount, 0);
+        const totalPreviousBilling = previousTransactions.reduce((acc, t) => acc + t.amount, 0);
+        
+        const countCurrent = currentTransactions.length;
+        const averageTicket = countCurrent > 0 ? totalBilling / countCurrent : 0;
+        
+        let growthPercentage = 0;
+        if (totalPreviousBilling > 0) {
+            growthPercentage = ((totalBilling - totalPreviousBilling) / totalPreviousBilling) * 100;
+        } else if (totalBilling > 0) {
+            growthPercentage = 100; // Crescimento infinito se anterior for 0
+        }
 
-        // Por Médico
-        const billingByDoctor = transactions.reduce((acc: any, t) => {
-            const doctorName = t.doctor?.name || 'Clínica';
-            acc[doctorName] = (acc[doctorName] || 0) + t.amount;
-            return acc;
-        }, {});
+        // --- CÁLCULO DA TIMELINE (BarChart) ---
+        // Agrupar por data (dia, semana, mês)
+        const timelineMap: Record<string, { total: number, count: number }> = {};
+        currentTransactions.forEach(t => {
+            let key = '';
+            const d = new Date(t.date);
+            if (groupBy === 'day') {
+                key = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+            } else if (groupBy === 'month') {
+                key = d.toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase().replace('.', '');
+            } else {
+                // week fallback
+                const weekNumber = Math.ceil(d.getDate() / 7);
+                key = `Sem ${weekNumber} - ${d.toLocaleDateString('pt-BR', { month: 'short' })}`;
+            }
 
-        // Por Categoria
-        const billingByCategory = transactions.reduce((acc: any, t) => {
-            acc[t.category] = (acc[t.category] || 0) + t.amount;
-            return acc;
-        }, {});
+            if (!timelineMap[key]) timelineMap[key] = { total: 0, count: 0 };
+            timelineMap[key].total += t.amount;
+            timelineMap[key].count += 1;
+        });
+
+        const timeline = Object.entries(timelineMap).map(([label, data]) => ({
+            label,
+            total: data.total,
+            count: data.count
+        }));
+
+        // Melhor período para KPI
+        let bestPeriod = { label: '---', value: 0 };
+        if (timeline.length > 0) {
+            const max = timeline.reduce((prev, current) => (prev.total > current.total) ? prev : current);
+            bestPeriod = { label: max.label, value: max.total };
+        }
+
+        // --- CÁLCULOS DOS RANKINGS ---
+        const procMap: Record<string, number> = {};
+        const doctorMap: Record<string, number> = {};
+        const categoryMap: Record<string, number> = {}; // Top Categories
+        
+        currentTransactions.forEach(t => {
+            // Procedimentos
+            const proc = t.procedureName || 'Sem Procedimento';
+            procMap[proc] = (procMap[proc] || 0) + t.amount;
+            
+            // Médicos
+            const doc = t.doctor?.name || 'Clínica';
+            doctorMap[doc] = (doctorMap[doc] || 0) + t.amount;
+
+            // Categorias (usaremos como Vendedores/Sellers proxy pois a regra de Vendedor não está clara no BD)
+            const cat = t.category || 'Outros';
+            categoryMap[cat] = (categoryMap[cat] || 0) + t.amount;
+        });
+
+        const sortRank = (map: Record<string, number>) => 
+            Object.entries(map)
+                .map(([name, value]) => ({ name, value }))
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 10); // Top 10
+
+        // --- DISTRIBUIÇÕES (Pie Charts) ---
+        const originMap: Record<string, number> = {};
+        const paymentMap: Record<string, number> = {};
+
+        currentTransactions.forEach(t => {
+            const origin = t.patient?.origin || 'Outros';
+            originMap[origin] = (originMap[origin] || 0) + 1; // Usando Count para Origem (quantos pacientes vieram)
+            
+            const pay = t.paymentMethod || 'Não Informado';
+            paymentMap[pay] = (paymentMap[pay] || 0) + t.amount; // Usando Faturamento para Formas de Recebimento
+        });
+
+        const buildDist = (map: Record<string, number>) => 
+            Object.entries(map).map(([name, value]) => ({ name, value }));
 
         return {
-            totalBilling,
-            byDoctor: Object.entries(billingByDoctor).map(([name, value]) => ({
-                name,
-                value,
-                percent: totalBilling > 0 ? ((value as number) / totalBilling) * 100 : 0
-            })),
-            byCategory: Object.entries(billingByCategory).map(([name, value]) => ({
-                name,
-                value,
-                percent: totalBilling > 0 ? ((value as number) / totalBilling) * 100 : 0
-            }))
+            kpis: {
+                totalBilling,
+                averageTicket,
+                bestPeriod,
+                growthPercentage
+            },
+            timeline,
+            rankings: {
+                procedures: sortRank(procMap),
+                doctors: sortRank(doctorMap),
+                categories: sortRank(categoryMap)
+            },
+            distributions: {
+                origins: buildDist(originMap),
+                paymentMethods: buildDist(paymentMap)
+            }
         };
     }
 }

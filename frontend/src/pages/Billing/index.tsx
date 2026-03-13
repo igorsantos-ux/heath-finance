@@ -1,50 +1,83 @@
-import { useState, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { reportingApi, integrationApi } from '../../services/api';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { reportingApi } from '../../services/api';
 import {
     BarChart3,
-    Users,
-    Tags,
     TrendingUp,
-    Calendar,
-    Filter,
     Download,
-    RefreshCw,
-    Loader2
+    Loader2,
+    PieChart as PieChartIcon,
+    ArrowUpRight,
+    ArrowDownRight,
+    Trophy,
+    Stethoscope,
+    Tags
 } from 'lucide-react';
+import { 
+    BarChart, 
+    Bar, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip as RechartsTooltip, 
+    ResponsiveContainer,
+    PieChart,
+    Pie,
+    Cell
+} from 'recharts';
+import { format, subMonths, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
+
+type GroupBy = 'day' | 'week' | 'month';
+
+const COLORS = ['#8A9A5B', '#DEB587', '#5B7C9A', '#9A5B7C', '#5B9A7C', '#c4c8b2', '#e5d7c5'];
 
 const BillingPage = () => {
-    const queryClient = useQueryClient();
-    const [isSyncing, setIsSyncing] = useState(false);
-
-    const { data: billingData, isLoading, isError } = useQuery({
-        queryKey: ['billing-analytics'],
-        queryFn: async () => {
-            const response = await reportingApi.getBillingAnalytics();
-            return response.data;
-        },
-        retry: 1
+    const [groupBy, setGroupBy] = useState<GroupBy>('month');
+    
+    // Filtros de Data
+    const today = new Date();
+    const [dateRange, setDateRange] = useState({
+        startDate: format(startOfMonth(today), 'yyyy-MM-dd'),
+        endDate: format(endOfMonth(today), 'yyyy-MM-dd')
     });
 
-    // Gatilho de Sincronização Automática On-Demand
-    useEffect(() => {
-        const triggerSync = async () => {
-            try {
-                setIsSyncing(true);
-                await integrationApi.sync('finance');
-                queryClient.invalidateQueries({ queryKey: ['billing-analytics'] });
-                console.log('✅ Dados financeiros atualizados com Feegow via auto-sync.');
-            } catch (error) {
-                console.warn('Auto-sync Feegow ignorado ou falhou:', error);
-            } finally {
-                setIsSyncing(false);
-            }
-        };
+    const { data: dashboardData, isLoading, isError } = useQuery({
+        queryKey: ['billing-dashboard', dateRange.startDate, dateRange.endDate, groupBy],
+        queryFn: async () => {
+            const response = await reportingApi.getBillingAnalytics({
+                startDate: dateRange.startDate,
+                endDate: dateRange.endDate,
+                groupBy
+            });
+            return response.data;
+        }
+    });
 
-        triggerSync();
-    }, [queryClient]);
+    const handleQuickFilter = (type: 'thisMonth' | 'lastMonth' | 'thisYear') => {
+        const now = new Date();
+        if (type === 'thisMonth') {
+            setDateRange({
+                startDate: format(startOfMonth(now), 'yyyy-MM-dd'),
+                endDate: format(endOfMonth(now), 'yyyy-MM-dd')
+            });
+            setGroupBy('day');
+        } else if (type === 'lastMonth') {
+            const last = subMonths(now, 1);
+            setDateRange({
+                startDate: format(startOfMonth(last), 'yyyy-MM-dd'),
+                endDate: format(endOfMonth(last), 'yyyy-MM-dd')
+            });
+            setGroupBy('day');
+        } else if (type === 'thisYear') {
+            setDateRange({
+                startDate: format(startOfYear(now), 'yyyy-MM-dd'),
+                endDate: format(endOfYear(now), 'yyyy-MM-dd')
+            });
+            setGroupBy('month');
+        }
+    };
 
-    if (isLoading) return (
+    if (isLoading && !dashboardData) return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50/50">
             <div className="flex flex-col items-center gap-4">
                 <Loader2 className="w-10 h-10 text-[#8A9A5B] animate-spin" />
@@ -53,161 +86,343 @@ const BillingPage = () => {
         </div>
     );
 
-    if (isError || !billingData) return (
+    if (isError) return (
         <div className="min-h-[400px] flex flex-col items-center justify-center gap-6 p-8 bg-white/50 rounded-[2.5rem] border border-red-100">
             <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-500">
                 <BarChart3 size={32} />
             </div>
             <div className="text-center space-y-2">
                 <h3 className="text-xl font-black text-slate-800">Ops! Falha ao carregar dados</h3>
-                <p className="text-slate-500 max-w-md">Não conseguimos processar as informações de faturamento no momento. Tente atualizar a página ou verifique sua conexão.</p>
+                <p className="text-slate-500 max-w-md">Não conseguimos processar as informações de faturamento no momento.</p>
             </div>
-            <button 
-                onClick={() => queryClient.invalidateQueries({ queryKey: ['billing-analytics'] })}
-                className="px-6 py-3 bg-slate-800 text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-slate-700 transition-all"
-            >
-                <RefreshCw size={18} /> Tentar Novamente
-            </button>
         </div>
     );
 
-    const safeTotalBilling = billingData?.totalBilling ?? 0;
-    const doctorsList = Array.isArray(billingData?.byDoctor) ? billingData.byDoctor : [];
-    const categoriesList = Array.isArray(billingData?.byCategory) ? billingData.byCategory : [];
+    const safeData = (dashboardData as any) || {};
+    const kpis = safeData.kpis || {};
+    const timeline = safeData.timeline || [];
+    const rankings = safeData.rankings || {};
+    const distributions = safeData.distributions || {};
+
+    const formatCurrency = (val: number) => `R$ ${(val || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+    const CustomTooltip = ({ active, payload, label }: any) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="bg-white/90 backdrop-blur-sm p-4 rounded-2xl shadow-xl border border-[#8A9A5B]/20">
+                    <p className="font-black text-slate-700 mb-2">{label}</p>
+                    <p className="font-black text-[#8A9A5B] text-lg">
+                        {formatCurrency(payload[0].value)}
+                    </p>
+                    <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">
+                        {payload[0].payload.count} Venda(s)
+                    </p>
+                </div>
+            );
+        }
+        return null;
+    };
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12 p-8 max-w-[1600px] mx-auto">
+            {/* Header & Controles */}
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-white/50 p-6 rounded-[2.5rem] border border-[#8A9A5B]/10">
                 <div>
-                    <h2 className="text-4xl font-black tracking-tight text-[#697D58]">Faturamento Detalhado</h2>
-                    <div className="flex items-center gap-4 mt-1">
-                        <p className="text-slate-500 font-medium">Análise de performance por médico e categoria.</p>
-                        {isSyncing && (
-                            <div className="flex items-center gap-2 px-3 py-1 bg-[#8A9A5B]/10 border border-[#8A9A5B]/20 rounded-full animate-in fade-in zoom-in duration-300">
-                                <RefreshCw className="w-3 h-3 text-[#8A9A5B] animate-spin" />
-                                <span className="text-[10px] font-black text-[#697D58] uppercase tracking-widest">Atualizando com Feegow...</span>
-                            </div>
-                        )}
-                    </div>
+                    <h2 className="text-4xl font-black tracking-tight text-[#697D58]">Dashboard de Vendas</h2>
+                    <p className="text-slate-500 font-medium mt-1">Análise de performance, evolução temporal e rankings estratégicos.</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-5 py-3 bg-white border border-[#8A9A5B]/20 rounded-2xl font-bold text-sm text-[#697D58] hover:bg-[#8A9A5B]/5 transition-all shadow-sm">
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                    {/* Filtros de Período Rápidos */}
+                    <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-[#8A9A5B]/10 shadow-sm">
+                        <button 
+                            onClick={() => handleQuickFilter('thisMonth')} 
+                            className="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:bg-slate-50 text-slate-600 focus:bg-[#8A9A5B]/10 hover:text-[#8A9A5B]"
+                        >
+                            Este Mês
+                        </button>
+                        <span className="w-px h-4 bg-slate-200"></span>
+                        <button 
+                            onClick={() => handleQuickFilter('lastMonth')}
+                            className="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:bg-slate-50 text-slate-600 focus:bg-[#8A9A5B]/10 hover:text-[#8A9A5B]"
+                        >
+                            Mês Passado
+                        </button>
+                        <span className="w-px h-4 bg-slate-200"></span>
+                        <button 
+                            onClick={() => handleQuickFilter('thisYear')}
+                            className="px-4 py-2 rounded-xl text-xs font-bold transition-all hover:bg-slate-50 text-slate-600 focus:bg-[#8A9A5B]/10 hover:text-[#8A9A5B]"
+                        >
+                            Este Ano
+                        </button>
+                    </div>
+
+                    {/* Toggle: Dia / Semana / Mês */}
+                    <div className="flex bg-slate-100/80 p-1.5 rounded-2xl">
+                        {(['day', 'week', 'month'] as GroupBy[]).map((gb) => (
+                            <button
+                                key={gb}
+                                onClick={() => setGroupBy(gb)}
+                                className={`px-4 py-2 rounded-xl text-xs font-black transition-all capitalize ${
+                                    groupBy === gb 
+                                    ? 'bg-white text-[#8A9A5B] shadow-sm' 
+                                    : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                            >
+                                {gb === 'day' ? 'Diário' : gb === 'week' ? 'Semanal' : 'Mensal'}
+                            </button>
+                        ))}
+                    </div>
+
+                    <button className="flex items-center gap-2 px-5 py-3 bg-[#8A9A5B] text-white rounded-2xl font-bold text-sm shadow-xl shadow-[#8A9A5B]/20 hover:scale-[1.02] active:scale-95 transition-all">
                         <Download size={18} /> Exportar
-                    </button>
-                    <button className="flex items-center gap-2 px-6 py-3 bg-[#8A9A5B] text-white rounded-2xl font-bold text-sm shadow-xl shadow-[#8A9A5B]/20 hover:scale-[1.02] active:scale-95 transition-all">
-                        <Filter size={20} /> Período
                     </button>
                 </div>
             </div>
 
-            {/* Total Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* KPIs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <KPICard
                     title="Faturamento Total"
-                    value={`R$ ${safeTotalBilling.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                    value={formatCurrency(kpis.totalBilling)}
                     icon={<BarChart3 size={24} />}
                 />
                 <KPICard
-                    title="Média Mensal"
-                    value={`R$ ${(safeTotalBilling / 12 || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                    icon={<Calendar size={24} />}
+                    title="Ticket Médio"
+                    value={formatCurrency(kpis.averageTicket)}
+                    icon={<Tags size={24} />}
                 />
                 <KPICard
-                    title="Melhor Médico"
-                    value={doctorsList[0]?.doctorName ?? '---'}
-                    icon={<Users size={24} />}
-                    subtitle={doctorsList[0]?.total ? `R$ ${doctorsList[0].total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : undefined}
+                    title="Melhor Período"
+                    value={formatCurrency(kpis.bestPeriod?.value)}
+                    subtitle={`Em: ${kpis.bestPeriod?.label}`}
+                    icon={<Trophy size={24} />}
+                />
+                <KPICard
+                    title="Crescimento (vs Anterior)"
+                    value={`${(kpis.growthPercentage || 0) > 0 ? '+' : ''}${(kpis.growthPercentage || 0).toFixed(1)}%`}
+                    valueColor={(kpis.growthPercentage || 0) >= 0 ? "text-emerald-500" : "text-red-500"}
+                    icon={(kpis.growthPercentage || 0) >= 0 ? <ArrowUpRight size={24} className="text-emerald-500" /> : <ArrowDownRight size={24} className="text-red-500" />}
                 />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Doctor Breakdown */}
-                <div className="bg-white/70 backdrop-blur-md p-10 rounded-[2.5rem] border border-[#8A9A5B]/10 shadow-sm relative overflow-hidden">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="w-12 h-12 bg-[#8A9A5B]/10 rounded-2xl flex items-center justify-center text-[#8A9A5B]">
-                            <Users size={24} />
-                        </div>
-                        <h3 className="font-extrabold text-2xl text-[#697D58]">Por Médico</h3>
+            {/* Evolução (BarChart) */}
+            <div className="bg-white p-8 rounded-[2.5rem] border border-[#8A9A5B]/10 shadow-sm relative overflow-hidden">
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="w-12 h-12 bg-[#8A9A5B]/10 rounded-2xl flex items-center justify-center text-[#8A9A5B]">
+                        <TrendingUp size={24} />
                     </div>
-                    {doctorsList.length > 0 ? (
-                        <div className="space-y-6">
-                            {doctorsList.map((doc: any, i: number) => {
-                                const percentage = (doc.total / (safeTotalBilling || 1)) * 100;
-                                return (
-                                    <div key={i} className="space-y-2">
-                                        <div className="flex justify-between items-center text-sm font-bold">
-                                            <span className="text-slate-700">{doc.doctorName || 'Médico não identificado'}</span>
-                                            <span className="text-[#697D58]">R$ {(doc.total ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                                        </div>
-                                        <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-[#8A9A5B] rounded-full transition-all duration-1000"
-                                                style={{ width: `${Math.min(percentage, 100)}%` }}
-                                            ></div>
-                                        </div>
-                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
-                                            Participação: {(doc.percentage ?? percentage)?.toFixed(1)}%
-                                        </p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="py-10 text-center text-slate-400 font-medium">Nenhum dado por médico disponível.</div>
-                    )}
+                    <div>
+                        <h3 className="font-extrabold text-2xl text-[#697D58]">Evolução de Vendas</h3>
+                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Comparativo de faturamento no período</p>
+                    </div>
                 </div>
+                
+                <div className="h-[400px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={timeline} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                            <XAxis 
+                                dataKey="label" 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 700 }}
+                                dy={10}
+                            />
+                            <YAxis 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 700 }}
+                                tickFormatter={(val) => `R$ ${(val / 1000).toFixed(0)}k`}
+                                dx={-10}
+                            />
+                            <RechartsTooltip cursor={{ fill: '#f8fafc' }} content={<CustomTooltip />} />
+                            <Bar 
+                                dataKey="total" 
+                                fill="#8A9A5B" 
+                                radius={[6, 6, 0, 0]} 
+                                barSize={40}
+                                animationDuration={1500}
+                            />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
 
-                {/* Category Breakdown */}
-                <div className="bg-white/70 backdrop-blur-md p-10 rounded-[2.5rem] border border-[#8A9A5B]/10 shadow-sm relative overflow-hidden">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="w-12 h-12 bg-[#DEB587]/10 rounded-2xl flex items-center justify-center text-[#DEB587]">
-                            <Tags size={24} />
-                        </div>
-                        <h3 className="font-extrabold text-2xl text-[#697D58]">Por Categoria</h3>
-                    </div>
-                    {categoriesList.length > 0 ? (
-                        <div className="grid grid-cols-1 gap-4">
-                            {categoriesList.map((cat: any, i: number) => (
-                                <div key={i} className="flex items-center justify-between p-5 bg-white rounded-2xl border border-[#8A9A5B]/5 hover:border-[#8A9A5B]/20 transition-all group cursor-default shadow-sm hover:shadow-md">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-11 h-11 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-[#DEB587] group-hover:text-white transition-all duration-300">
-                                            <TrendingUp size={20} />
-                                        </div>
-                                        <span className="font-black text-slate-700">{cat.category || 'Outros'}</span>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="font-black text-[#697D58] text-lg">R$ {(cat.total ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{cat.count ?? 0} transação(ões)</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="py-10 text-center text-slate-400 font-medium">Nenhum dado por categoria disponível.</div>
-                    )}
-                </div>
+            {/* Grid 3 Colunas: Rankings */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <RankingCard 
+                    title="Top Procedimentos" 
+                    icon={<Tags size={20} />}
+                    data={rankings.procedures} 
+                    total={kpis.totalBilling}
+                    color="#DEB587"
+                />
+                <RankingCard 
+                    title="Top Médicos" 
+                    icon={<Stethoscope size={20} />}
+                    data={rankings.doctors} 
+                    total={kpis.totalBilling}
+                    color="#8A9A5B"
+                />
+                <RankingCard 
+                    title="Top Avaliadores/Vendas (Categorias)" 
+                    icon={<Trophy size={20} />}
+                    data={rankings.categories} 
+                    total={kpis.totalBilling}
+                    color="#5B7C9A"
+                />
+            </div>
+
+            {/* Rodapé Analítico: Distribuições */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <PieCard title="Origem dos Pacientes" data={distributions.origins} />
+                <PieCard title="Formas de Recebimento" data={distributions.paymentMethods} isCurrency />
             </div>
         </div>
     );
 };
 
-const KPICard = ({ title, value, icon, subtitle }: any) => (
-    <div className="bg-white p-8 rounded-[2.5rem] border border-[#8A9A5B]/10 shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 group relative overflow-hidden">
+// --- Subcomponentes Otimizados ---
+
+const CustomPieTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white/90 backdrop-blur-sm p-4 rounded-2xl shadow-xl border border-[#8A9A5B]/20">
+                <p className="font-black text-slate-700 mb-1">{payload[0].name}</p>
+                <p className="font-black text-[#DEB587] text-md">
+                    {payload[0].value.toLocaleString('pt-BR')} 
+                    {payload[0].name === 'Instagram' || payload[0].name === 'Outros' ? ' Pacotes' : ' R$'}
+                </p>
+            </div>
+        );
+    }
+    return null;
+};
+
+const KPICard = ({ title, value, icon, subtitle, valueColor = "text-[#1A202C]" }: any) => (
+    <div className="bg-white p-6 xl:p-8 rounded-[2.5rem] border border-[#8A9A5B]/10 shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 group relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
             {icon}
         </div>
-        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">{title}</p>
+        <div className="flex justify-between items-start mb-4">
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{title}</p>
+            <div className="p-2 bg-slate-50 rounded-xl text-slate-400 group-hover:bg-[#8A9A5B]/10 group-hover:text-[#8A9A5B] transition-colors">
+                {icon}
+            </div>
+        </div>
         <div className="flex flex-col">
-            <h4 className="text-3xl font-black text-[#1A202C]">{value}</h4>
+            <h4 className={`text-2xl xl:text-3xl font-black ${valueColor} truncate`}>{value}</h4>
             {subtitle && (
-                <div className="flex items-center gap-1.5 mt-2 bg-[#8A9A5B]/5 w-fit px-3 py-1 rounded-full border border-[#8A9A5B]/10 animate-in zoom-in-90 duration-500">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#8A9A5B]"></span>
-                    <span className="text-xs font-black text-[#697D58]">{subtitle}</span>
+                <div className="mt-2 text-xs font-bold text-[#697D58] bg-[#8A9A5B]/10 px-3 py-1.5 rounded-xl w-fit">
+                    {subtitle}
                 </div>
             )}
         </div>
     </div>
 );
+
+const RankingCard = ({ title, data = [], total = 0, icon, color }: any) => (
+    <div className="bg-white p-8 rounded-[2.5rem] border border-[#8A9A5B]/10 shadow-sm flex flex-col h-full">
+        <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 rounded-xl text-white" style={{ backgroundColor: color }}>
+                {icon}
+            </div>
+            <h3 className="font-extrabold text-lg text-slate-800">{title}</h3>
+        </div>
+        <div className="space-y-5 flex-1 overflow-y-auto pr-2">
+            {data.length === 0 ? (
+                <p className="text-sm text-slate-400 font-bold">Nenhum dado registrado.</p>
+            ) : (
+                data.map((item: any, idx: number) => {
+                    const percent = total > 0 ? (item.value / total) * 100 : 0;
+                    return (
+                        <div key={idx} className="group">
+                            <div className="flex justify-between items-center mb-2 text-sm">
+                                <span className="font-black text-slate-600 truncate max-w-[65%]">
+                                    <span className="text-slate-300 mr-2">#{idx + 1}</span>
+                                    {item.name}
+                                </span>
+                                <span className="font-bold text-slate-800">
+                                    R$ {item.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </span>
+                            </div>
+                            <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+                                <div 
+                                    className="h-full rounded-full transition-all duration-1000 opacity-80 group-hover:opacity-100" 
+                                    style={{ width: `${Math.max(percent, 2)}%`, backgroundColor: color }}
+                                />
+                            </div>
+                            <p className="text-[9px] font-black text-slate-400 mt-1.5 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                                Repr: {percent.toFixed(1)}% do total
+                            </p>
+                        </div>
+                    );
+                })
+            )}
+        </div>
+    </div>
+);
+
+const PieCard = ({ title, data = [], isCurrency = false }: any) => {
+    // Tratando dados para evitar quebras se vier vazio ou 0
+    const validData = data.filter((d: any) => d.value > 0);
+
+    return (
+        <div className="bg-white p-8 rounded-[2.5rem] border border-[#8A9A5B]/10 shadow-sm flex flex-col sm:flex-row items-center gap-6">
+            <div className="flex-1 w-full">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-[#DEB587]/10 rounded-xl text-[#DEB587]">
+                        <PieChartIcon size={20} />
+                    </div>
+                    <div>
+                        <h3 className="font-extrabold text-lg text-slate-800">{title}</h3>
+                        <p className="text-[10px] uppercase font-bold text-slate-400">Distribuição geral</p>
+                    </div>
+                </div>
+                <div className="space-y-2.5 mt-6">
+                    {validData.length === 0 ? (
+                        <p className="text-xs text-slate-400 font-bold">Sem dados suficientes.</p>
+                    ) : (
+                        validData.map((d: any, i: number) => (
+                            <div key={i} className="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
+                                    <span className="text-xs font-black text-slate-600 truncate max-w-[120px]">{d.name}</span>
+                                </div>
+                                <span className="text-xs font-bold text-slate-700">
+                                    {isCurrency ? `R$ ${d.value.toLocaleString('pt-BR')}` : d.value}
+                                </span>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+            <div className="w-full sm:w-[200px] h-[200px] flex justify-center items-center">
+                {validData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                                data={validData}
+                                innerRadius={60}
+                                outerRadius={80}
+                                paddingAngle={5}
+                                dataKey="value"
+                            >
+                                {validData.map((_: any, index: number) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <RechartsTooltip content={<CustomPieTooltip />} />
+                        </PieChart>
+                    </ResponsiveContainer>
+                ) : (
+                    <div className="w-32 h-32 rounded-full border-8 border-slate-50 flex flex-col items-center justify-center">
+                        <PieChartIcon size={24} className="text-slate-200" />
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 export default BillingPage;
