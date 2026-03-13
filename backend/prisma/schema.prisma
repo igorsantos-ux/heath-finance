@@ -55,6 +55,7 @@ model Clinic {
   goals                 FinancialGoal[]
   documents             Document[]
   accountPayables       AccountPayable[]
+  pricingSimulations    PricingSimulation[]
   createdAt             DateTime        @default(now())
 }
 
@@ -230,4 +231,34 @@ model AccountPayableInstallment {
   status            String         @default("PENDENTE") // PENDENTE, PAGO, ATRASADO, CANCELADO
   paidAt            DateTime?
   paymentMethod     String?
+}
+
+model PricingSimulation {
+  id                  String          @id @default(uuid())
+  name                String
+  sellingPrice        Float
+  totalCost           Float
+  netProfit           Float
+  profitMargin        Float
+  cardFeePercentage   Float           @default(0)
+  taxPercentage       Float           @default(0)
+  fixedCost           Float           @default(0)
+  commission          Float           @default(0)
+  supplies            PricingSupply[]
+  
+  clinicId            String
+  clinic              Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+}
+
+model PricingSupply {
+  id                  String             @id @default(uuid())
+  name                String
+  quantity            Float
+  cost                Float
+  
+  pricingSimulationId String
+  pricingSimulation   PricingSimulation  @relation(fields: [pricingSimulationId], references: [id], onDelete: Cascade)
 }

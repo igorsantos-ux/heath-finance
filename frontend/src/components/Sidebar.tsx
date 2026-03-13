@@ -10,7 +10,8 @@ import {
     ArrowDownCircle,
     ArrowUpCircle,
     FolderOpen,
-    LogOut
+    LogOut,
+    Calculator
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -49,6 +50,7 @@ const Sidebar = () => {
         { icon: <Wallet size={18} />, label: "Recebimentos (Caixa)", path: "/income" },
         { icon: <FileText size={18} />, label: "DRE", path: "/dre" },
         { icon: <FileText size={18} />, label: "DFC", path: "/dfc" },
+        { icon: <Calculator size={18} />, label: "Precificação", path: "/pricing" },
         { icon: <Target size={18} />, label: "Metas", path: "/goals" },
         { icon: <Package size={18} />, label: "Estoque", path: "/inventory" },
         { icon: <FolderOpen size={18} />, label: "Documentos", path: "/documents" },
@@ -72,14 +74,14 @@ const Sidebar = () => {
 
                 <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Financeiro</p>
                 <div className="space-y-1 mb-8">
-                    {menuItems.slice(3, 9).map((item) => (
+                    {menuItems.slice(3, 10).map((item) => (
                         <SidebarLink key={item.path} item={item} active={location.pathname === item.path} />
                     ))}
                 </div>
 
                 <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Gestão</p>
                 <div className="space-y-1">
-                    {menuItems.slice(9).map((item) => (
+                    {menuItems.slice(10).map((item) => (
                         <SidebarLink key={item.path} item={item} active={location.pathname === item.path} />
                     ))}
                 </div>

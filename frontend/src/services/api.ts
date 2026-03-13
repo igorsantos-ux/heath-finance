@@ -128,4 +128,9 @@ export const integrationApi = {
     sync: (module?: string) => api.post(`integrations/sync${module ? `?module=${module}` : ''}`),
 };
 
+export const pricingApi = {
+    createSimulation: (data: any) => api.post('pricing', data),
+    getSimulations: () => api.get('pricing'),
+};
+
 export default api;
