@@ -51,7 +51,7 @@ model Clinic {
   transactions          Transaction[]
   doctors               Doctor[]
   patients              Patient[]
-  stockItems            StockItem[]
+  inventoryItems        InventoryItem[]
   goals                 FinancialGoal[]
   documents             Document[]
   accountPayables       AccountPayable[]
@@ -150,17 +150,21 @@ model Lead {
   createdAt DateTime @default(now())
 }
 
-model StockItem {
-  id           String   @id @default(uuid())
-  name         String
-  category     String
-  quantity     Int
-  minQuantity  Int
-  price        Float
-  lastRestock  DateTime @default(now())
+model InventoryItem {
+  id             String    @id @default(uuid())
+  name           String
+  category       String
+  unit           String    @default("Unidade")
+  quantity       Float     @default(0)
+  minQuantity    Float     @default(0)
+  unitCost       Float     @default(0)
+  supplier       String?
+  expirationDate DateTime?
+  batch          String?
+  lastRestock    DateTime  @default(now())
   
-  clinicId     String
-  clinic       Clinic   @relation(fields: [clinicId], references: [id])
+  clinicId       String
+  clinic         Clinic    @relation(fields: [clinicId], references: [id])
 }
 
 model FinancialGoal {

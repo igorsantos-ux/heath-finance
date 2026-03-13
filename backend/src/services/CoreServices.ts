@@ -1,4 +1,4 @@
-import { Transaction, Doctor, StockItem } from '@prisma/client';
+import { Transaction, Doctor, InventoryItem } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 
 export class MedicalService {
@@ -39,20 +39,21 @@ export class MedicalService {
 
 export class InventoryService {
     static async getStockStatus(clinicId: string) {
-        const items: StockItem[] = await prisma.stockItem.findMany({
+        const items: InventoryItem[] = await prisma.inventoryItem.findMany({
             where: { clinicId }
         });
 
-        const totalInventoryValue = items.reduce((acc, item) => acc + (item.quantity * item.price), 0);
+        const totalInventoryValue = items.reduce((acc, item) => acc + (item.quantity * item.unitCost), 0);
 
         // Lógica Curva ABC (Simplificada por Valor de Estoque)
-        const sortedItems = [...items].sort((a, b) => (b.quantity * b.price) - (a.quantity * a.price));
+        const sortedItems = [...items].sort((a, b) => (b.quantity * b.unitCost) - (a.quantity * a.unitCost));
 
         let cumulativeValue = 0;
         return sortedItems.map(item => {
-            const itemValue = item.quantity * item.price;
+            const itemValue = item.quantity * item.unitCost;
             cumulativeValue += itemValue;
-            const percentage = (cumulativeValue / totalInventoryValue) * 100;
+            const totalValueSum = totalInventoryValue || 1;
+            const percentage = (cumulativeValue / totalValueSum) * 100;
 
             let categoryABC = 'C';
             if (percentage <= 70) categoryABC = 'A';
@@ -67,15 +68,11 @@ export class InventoryService {
         });
     }
 
-    static async createStockItem(data: { name: string; quantity: number; minQuantity: number; price: number; category: string; clinicId: string }) {
-        return await prisma.stockItem.create({
+    static async createStockItem(data: any) {
+        return await prisma.inventoryItem.create({
             data: {
-                name: data.name,
-                quantity: data.quantity,
-                minQuantity: data.minQuantity,
-                price: data.price,
-                category: data.category,
-                clinicId: data.clinicId
+                ...data,
+                expirationDate: data.expirationDate ? new Date(data.expirationDate) : null
             }
         });
     }

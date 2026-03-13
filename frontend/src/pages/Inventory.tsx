@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { coreApi } from '../services/api';
 import {
     Package,
@@ -11,29 +11,40 @@ import {
     Download,
     MoreVertical,
     BarChart2,
-    Loader2
+    Loader2,
+    Calendar,
+    Truck
 } from 'lucide-react';
+import { InventorySheet } from '../components/Inventory/InventorySheet';
 
 const Inventory = () => {
+    const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<any>(null);
 
     const { data: response, isLoading } = useQuery({
         queryKey: ['stock-items'],
         queryFn: () => coreApi.getStock()
     });
 
-    const stockItems = response?.data || [];
+    const stockItems = Array.isArray(response?.data) ? response.data : [];
 
     const stats = {
         totalItems: stockItems.length,
-        lowStock: stockItems.filter((i: any) => i.currentStock <= i.minStock).length,
-        totalValue: stockItems.reduce((acc: number, cur: any) => acc + (cur.currentStock * cur.averageCost), 0)
+        lowStock: stockItems.filter((i: any) => i.quantity <= i.minQuantity).length,
+        totalValue: stockItems.reduce((acc: number, cur: any) => acc + (cur.quantity * (cur.unitCost || 0)), 0)
     };
 
     const filteredItems = stockItems.filter((item: any) =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const handleOpenSheet = (item?: any) => {
+        setSelectedItem(item || null);
+        setIsSheetOpen(true);
+    };
 
     if (isLoading) {
         return (
@@ -46,6 +57,13 @@ const Inventory = () => {
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
+            <InventorySheet 
+                isOpen={isSheetOpen} 
+                onClose={() => setIsSheetOpen(false)} 
+                onSave={() => queryClient.invalidateQueries({ queryKey: ['stock-items'] })}
+                item={selectedItem}
+            />
+
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
@@ -53,7 +71,10 @@ const Inventory = () => {
                     <p className="text-slate-500 font-medium mt-1">Gestão de materiais e suprimentos da clínica.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-6 py-3 bg-[#8A9A5B] text-white rounded-2xl font-bold text-sm shadow-xl shadow-[#8A9A5B]/20 hover:scale-[1.02] active:scale-95 transition-all">
+                    <button 
+                        onClick={() => handleOpenSheet()}
+                        className="flex items-center gap-2 px-6 py-3 bg-[#8A9A5B] text-white rounded-2xl font-bold text-sm shadow-xl shadow-[#8A9A5B]/20 hover:scale-[1.02] active:scale-95 transition-all"
+                    >
                         <Plus size={20} />
                         Novo Item
                     </button>
@@ -101,47 +122,56 @@ const Inventory = () => {
                             <thead>
                                 <tr className="bg-slate-50/50">
                                     <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Item</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoria</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoria / Unid.</th>
                                     <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldos</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Rastreabilidade</th>
                                     <th className="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Ações</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#8A9A5B]/5">
                                 {filteredItems.map((item: any) => (
-                                    <tr key={item.id} className="hover:bg-[#8A9A5B]/5 transition-colors group cursor-pointer">
+                                    <tr key={item.id} className="hover:bg-[#8A9A5B]/5 transition-colors group cursor-pointer" onClick={() => handleOpenSheet(item)}>
                                         <td className="px-8 py-6">
                                             <div>
                                                 <p className="font-black text-slate-700 text-sm">{item.name}</p>
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">SKU: {item.sku || 'N/A'}</p>
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Lote: {item.batch || '---'}</p>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full">{item.category}</span>
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-bold text-[#697D58] uppercase tracking-widest bg-[#8A9A5B]/10 px-3 py-1 rounded-full w-fit">{item.category}</span>
+                                                <span className="text-[9px] text-slate-400 font-black ml-2">{item.unit}</span>
+                                            </div>
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-3">
                                                 <div className="text-center bg-white border border-[#8A9A5B]/5 rounded-xl px-4 py-2">
                                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Atual</p>
-                                                    <p className={`text-lg font-black ${item.currentStock <= item.minStock ? 'text-[#DEB587]' : 'text-slate-700'}`}>{item.currentStock}</p>
+                                                    <p className={`text-lg font-black ${item.quantity <= item.minQuantity ? 'text-[#DEB587]' : 'text-slate-700'}`}>{item.quantity}</p>
                                                 </div>
                                                 <ArrowUpDown size={14} className="text-slate-300" />
                                                 <div className="text-center text-slate-400">
                                                     <p className="text-[10px] font-bold uppercase tracking-widest">Mín</p>
-                                                    <p className="text-xs font-black">{item.minStock}</p>
+                                                    <p className="text-xs font-black">{item.minQuantity}</p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6">
-                                            {item.currentStock <= item.minStock ? (
-                                                <span className="flex items-center gap-1.5 px-3 py-1 bg-[#DEB587]/10 text-[#DEB587] rounded-full text-[10px] font-black uppercase tracking-widest w-fit animate-pulse">
-                                                    <AlertTriangle size={12} /> Reposição Necessária
-                                                </span>
-                                            ) : (
-                                                <span className="flex items-center gap-1.5 px-3 py-1 bg-[#8A9A5B]/10 text-[#697D58] rounded-full text-[10px] font-black uppercase tracking-widest w-fit">
-                                                    Abastecido
-                                                </span>
-                                            )}
+                                        <td className="px-8 py-6 text-center">
+                                            <div className="flex flex-col items-center gap-1">
+                                                {item.expirationDate ? (
+                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                                                        <Calendar size={12} className="text-[#8A9A5B]" />
+                                                        {new Date(item.expirationDate).toLocaleDateString()}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-[10px] text-slate-300 font-bold uppercase">Sem expiraçâo</span>
+                                                )}
+                                                {item.supplier && (
+                                                    <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-medium">
+                                                        <Truck size={10} /> {item.supplier}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-8 py-6 text-right">
                                             <button className="p-2 hover:bg-white rounded-lg transition-all text-slate-400 hover:text-[#8A9A5B]">
